@@ -21,7 +21,7 @@ import example.yf.fruit_hall.data.position.entity.WorkDayEntity
         SlotSettingsEntity::class,
         AssignmentEntity::class
     ],
-    version = 1,
+    version = 3,
     exportSchema = false
 )
 abstract class PositionDatabase : RoomDatabase() {
