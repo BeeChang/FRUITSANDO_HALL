@@ -21,6 +21,7 @@ serialization = "1.8.0"
 lottie = "6.5.2"
 datastore = "1.1.3"
 constraintLayout = "1.0.1"
+room = "2.8.4"
 
 [libraries]
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
@@ -73,6 +74,11 @@ lottie-compose = { module = "com.airbnb.android:lottie-compose", version.ref = "
 
 # DataStore
 datastore = { module = "androidx.datastore:datastore-preferences", version.ref = "datastore" }
+
+# Room
+room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
+room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
+room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
