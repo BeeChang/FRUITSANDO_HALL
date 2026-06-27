@@ -1,6 +1,8 @@
 package example.yf.fruit_hall.ui.position.component
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -8,18 +10,26 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -29,10 +39,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import example.yf.fruit_hall.ui.position.SlotHistoryUi
+import example.yf.fruit_hall.ui.theme.AppTheme
 
 @Composable
 fun HistoryDialog(
@@ -41,6 +55,7 @@ fun HistoryDialog(
     onResetAll: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    val appColors = AppTheme.colors
     var showDayResetConfirm by remember { mutableStateOf(false) }
     var showFullResetConfirm by remember { mutableStateOf(false) }
 
@@ -48,95 +63,110 @@ fun HistoryDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
-        Surface(
+        Card(
             shape = RoundedCornerShape(16.dp),
-            tonalElevation = 6.dp,
-            modifier = Modifier.fillMaxWidth(0.7f)
+            modifier = Modifier.fillMaxWidth(0.75f),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
         ) {
-            Column(modifier = Modifier.padding(20.dp)) {
-                Text(
-                    text = "오늘 기록",
-                    style = MaterialTheme.typography.titleLarge
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
+            Column {
+                // 헤더
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(appColors.grey900)
+                        .padding(start = 20.dp, end = 8.dp, top = 14.dp, bottom = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.History,
+                        contentDescription = null,
+                        tint = appColors.white,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(Modifier.width(10.dp))
+                    Text(
+                        text = "오늘 배정 기록",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = appColors.white,
+                        modifier = Modifier.weight(1f)
+                    )
+                    IconButton(onClick = onDismiss) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "닫기",
+                            tint = appColors.grey300,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
 
                 if (history.isEmpty()) {
-                    Text(
-                        text = "기록이 없습니다.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(vertical = 24.dp)
-                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(48.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(
+                                imageVector = Icons.Default.History,
+                                contentDescription = null,
+                                tint = appColors.grey200,
+                                modifier = Modifier.size(52.dp)
+                            )
+                            Spacer(Modifier.height(14.dp))
+                            Text(
+                                text = "오늘 배정 기록이 없습니다",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = appColors.grey400
+                            )
+                        }
+                    }
                 } else {
                     LazyColumn(
-                        modifier = Modifier.heightIn(max = 400.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 420.dp)
+                            .padding(horizontal = 16.dp, vertical = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         items(history) { slot ->
-                            Card(
-                                colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                                ),
-                                shape = RoundedCornerShape(10.dp)
-                            ) {
-                                Column(modifier = Modifier.padding(12.dp)) {
-                                    Text(
-                                        text = "${slot.slotNumber}차",
-                                        style = MaterialTheme.typography.titleSmall,
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    slot.assignments.forEach { assignment ->
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.SpaceBetween
-                                        ) {
-                                            Text(
-                                                text = assignment.memberName,
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                modifier = Modifier.weight(1f)
-                                            )
-                                            Text(
-                                                text = "→ ${assignment.positionName}",
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                                            )
-                                        }
-                                    }
-                                }
-                            }
+                            SlotHistoryCard(slot = slot)
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
-                HorizontalDivider()
-                Spacer(modifier = Modifier.height(12.dp))
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    OutlinedButton(
+                    TextButton(
                         onClick = { showDayResetConfirm = true },
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = MaterialTheme.colorScheme.error
-                        )
+                        colors = ButtonDefaults.textButtonColors(contentColor = appColors.crimson500)
                     ) {
-                        Text("오늘 초기화")
+                        Icon(Icons.Default.Refresh, null, modifier = Modifier.size(15.dp))
+                        Spacer(Modifier.width(4.dp))
+                        Text("오늘 초기화", style = MaterialTheme.typography.labelMedium)
                     }
-                    Button(
+                    TextButton(
                         onClick = { showFullResetConfirm = true },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.error
-                        )
+                        colors = ButtonDefaults.textButtonColors(contentColor = appColors.crimson500)
                     ) {
-                        Text("전체 초기화")
+                        Icon(Icons.Default.Delete, null, modifier = Modifier.size(15.dp))
+                        Spacer(Modifier.width(4.dp))
+                        Text("전체 초기화", style = MaterialTheme.typography.labelMedium)
                     }
-                    Spacer(modifier = Modifier.weight(1f))
-                    OutlinedButton(onClick = onDismiss) {
+                    Spacer(Modifier.weight(1f))
+                    Button(
+                        onClick = onDismiss,
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
                         Text("닫기")
                     }
                 }
@@ -147,16 +177,14 @@ fun HistoryDialog(
     if (showDayResetConfirm) {
         AlertDialog(
             onDismissRequest = { showDayResetConfirm = false },
-            title = { Text("오늘 기록 초기화") },
-            text = { Text("오늘의 배정 기록을 모두 삭제하고 차수를 1로 되돌립니다.\n계속하시겠습니까?") },
+            shape = RoundedCornerShape(16.dp),
+            title = { Text("오늘 기록 초기화", fontWeight = FontWeight.SemiBold) },
+            text = { Text("오늘의 배정 기록을 모두 삭제하고 차수를 1로 되돌립니다.") },
             confirmButton = {
                 Button(
-                    onClick = {
-                        showDayResetConfirm = false
-                        onResetToday()
-                        onDismiss()
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                    onClick = { showDayResetConfirm = false; onResetToday(); onDismiss() },
+                    colors = ButtonDefaults.buttonColors(containerColor = AppTheme.colors.crimson500),
+                    shape = RoundedCornerShape(8.dp)
                 ) { Text("초기화") }
             },
             dismissButton = {
@@ -168,21 +196,117 @@ fun HistoryDialog(
     if (showFullResetConfirm) {
         AlertDialog(
             onDismissRequest = { showFullResetConfirm = false },
-            title = { Text("전체 기록 초기화") },
-            text = { Text("모든 배정 기록을 삭제합니다.\n이 작업은 되돌릴 수 없습니다.\n계속하시겠습니까?") },
+            shape = RoundedCornerShape(16.dp),
+            title = { Text("전체 기록 초기화", fontWeight = FontWeight.SemiBold) },
+            text = { Text("모든 배정 기록을 영구 삭제합니다.\n이 작업은 되돌릴 수 없습니다.") },
             confirmButton = {
                 Button(
-                    onClick = {
-                        showFullResetConfirm = false
-                        onResetAll()
-                        onDismiss()
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                    onClick = { showFullResetConfirm = false; onResetAll(); onDismiss() },
+                    colors = ButtonDefaults.buttonColors(containerColor = AppTheme.colors.crimson500),
+                    shape = RoundedCornerShape(8.dp)
                 ) { Text("전체 초기화") }
             },
             dismissButton = {
                 TextButton(onClick = { showFullResetConfirm = false }) { Text("취소") }
             }
         )
+    }
+}
+
+private val slotPaletteColors = listOf(
+    Color(0xFFFFB3C6),
+    Color(0xFFB3D9FF),
+    Color(0xFFA8E6CF),
+    Color(0xFFD4B8F5),
+    Color(0xFFFFD6A5),
+)
+
+@Composable
+private fun SlotHistoryCard(slot: SlotHistoryUi) {
+    val appColors = AppTheme.colors
+    val slotColor = slotPaletteColors[(slot.slotNumber - 1) % slotPaletteColors.size]
+    val textColor = Color(0xFF2D2D2D)
+
+    Card(
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = slotColor.copy(alpha = 0.15f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(modifier = Modifier.padding(14.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(slotColor)
+                        .padding(horizontal = 12.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = "${slot.slotNumber}차",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = textColor
+                    )
+                }
+                Icon(
+                    imageVector = Icons.Default.CheckCircle,
+                    contentDescription = null,
+                    tint = appColors.success500,
+                    modifier = Modifier.size(14.dp)
+                )
+                Text(
+                    text = "확정",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = appColors.success600,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+
+            Spacer(Modifier.height(10.dp))
+
+            slot.assignments.forEach { assignment ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 2.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = assignment.memberName,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = textColor,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            text = "→",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = appColors.grey300
+                        )
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(slotColor)
+                                .padding(horizontal = 10.dp, vertical = 3.dp)
+                        ) {
+                            Text(
+                                text = assignment.positionName,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = textColor,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
 }
