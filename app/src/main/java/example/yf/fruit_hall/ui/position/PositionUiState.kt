@@ -6,8 +6,8 @@ data class PositionUiState(
     val currentSlot: Int = 1,
     val totalSlots: Int = 3,
     val drawResult: List<DrawResultItem> = emptyList(),
-    val isAnimating: Boolean = false,
     val isDrawDone: Boolean = false,
+    val isConfirmedSlot: Boolean = false,
     val todayHistory: List<SlotHistoryUi> = emptyList(),
     val memberWeights: Map<Long, Map<Long, Float>> = emptyMap(),
     val showMemberDialog: Boolean = false,
@@ -15,15 +15,14 @@ data class PositionUiState(
     val showWeightDialog: Boolean = false,
     val showSlotDialog: Boolean = false,
     val showHistoryDialog: Boolean = false,
-    val showDayResetConfirm: Boolean = false,
-    val showFullResetConfirm: Boolean = false,
     val todayDate: String = ""
 )
 
 data class MemberUi(
     val id: Long,
     val name: String,
-    val isWorking: Boolean
+    val isWorking: Boolean,
+    val colorHex: String = "#4D96FF"
 )
 
 data class PositionUi(
@@ -54,7 +53,6 @@ data class SlotAssignmentUi(
 sealed interface PositionEvent {
     data class ToggleWorking(val memberId: Long) : PositionEvent
     data object StartDraw : PositionEvent
-    data object SkipAnimation : PositionEvent
     data class SwapMembers(
         val fromPositionId: Long,
         val memberId: Long,
@@ -62,12 +60,13 @@ sealed interface PositionEvent {
     ) : PositionEvent
     data object ConfirmDraw : PositionEvent
     data object CancelDraw : PositionEvent
-    data class RedrawPosition(val positionId: Long) : PositionEvent
+
+    data class SelectSlot(val slotNumber: Int) : PositionEvent
 
     data object ResetToday : PositionEvent
     data object ResetAll : PositionEvent
 
-    data class AddMember(val name: String) : PositionEvent
+    data class AddMember(val name: String, val colorHex: String) : PositionEvent
     data class UpdateMember(val id: Long, val name: String) : PositionEvent
     data class DeleteMember(val id: Long) : PositionEvent
 
@@ -94,8 +93,4 @@ sealed interface PositionEvent {
     data object HideSlotDialog : PositionEvent
     data object ShowHistoryDialog : PositionEvent
     data object HideHistoryDialog : PositionEvent
-    data object ShowDayResetConfirm : PositionEvent
-    data object HideDayResetConfirm : PositionEvent
-    data object ShowFullResetConfirm : PositionEvent
-    data object HideFullResetConfirm : PositionEvent
 }

@@ -7,8 +7,6 @@ import example.yf.fruit_hall.data.position.PositionRepository
 import example.yf.fruit_hall.data.position.entity.AssignmentEntity
 import example.yf.fruit_hall.data.position.entity.MemberEntity
 import example.yf.fruit_hall.data.position.entity.PositionEntity
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,8 +23,6 @@ class PositionViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(PositionUiState())
     val uiState: StateFlow<PositionUiState> = _uiState.asStateFlow()
-
-    private var animationJob: Job? = null
 
     private var cachedMembers: List<MemberEntity> = emptyList()
     private var cachedPositions: List<PositionEntity> = emptyList()
@@ -71,16 +67,15 @@ class PositionViewModel @Inject constructor(
         when (event) {
             is PositionEvent.ToggleWorking -> toggleWorking(event.memberId)
             is PositionEvent.StartDraw -> startDraw()
-            is PositionEvent.SkipAnimation -> skipAnimation()
             is PositionEvent.SwapMembers -> swapMembers(event.fromPositionId, event.memberId, event.toPositionId)
             is PositionEvent.ConfirmDraw -> confirmDraw()
             is PositionEvent.CancelDraw -> cancelDraw()
-            is PositionEvent.RedrawPosition -> redrawPosition(event.positionId)
 
+            is PositionEvent.SelectSlot -> selectSlot(event.slotNumber)
             is PositionEvent.ResetToday -> resetToday()
             is PositionEvent.ResetAll -> resetAll()
 
-            is PositionEvent.AddMember -> addMember(event.name)
+            is PositionEvent.AddMember -> addMember(event.name, event.colorHex)
             is PositionEvent.UpdateMember -> updateMember(event.id, event.name)
             is PositionEvent.DeleteMember -> deleteMember(event.id)
 
@@ -100,10 +95,6 @@ class PositionViewModel @Inject constructor(
             is PositionEvent.HideSlotDialog -> _uiState.update { it.copy(showSlotDialog = false) }
             is PositionEvent.ShowHistoryDialog -> _uiState.update { it.copy(showHistoryDialog = true) }
             is PositionEvent.HideHistoryDialog -> _uiState.update { it.copy(showHistoryDialog = false) }
-            is PositionEvent.ShowDayResetConfirm -> _uiState.update { it.copy(showDayResetConfirm = true) }
-            is PositionEvent.HideDayResetConfirm -> _uiState.update { it.copy(showDayResetConfirm = false) }
-            is PositionEvent.ShowFullResetConfirm -> _uiState.update { it.copy(showFullResetConfirm = true) }
-            is PositionEvent.HideFullResetConfirm -> _uiState.update { it.copy(showFullResetConfirm = false) }
         }
     }
 
@@ -129,22 +120,9 @@ class PositionViewModel @Inject constructor(
                 todayAssignments = todayAssignments,
                 currentSlot = state.currentSlot
             )
-
             val resultItems = buildDrawResult(drawPairs, workingMembers, cachedPositions)
-
-            _uiState.update { it.copy(drawResult = resultItems, isAnimating = true) }
-
-            animationJob = launch {
-                delay(2000)
-                _uiState.update { it.copy(isAnimating = false, isDrawDone = true) }
-            }
+            _uiState.update { it.copy(drawResult = resultItems, isDrawDone = true) }
         }
-    }
-
-    private fun skipAnimation() {
-        animationJob?.cancel()
-        animationJob = null
-        _uiState.update { it.copy(isAnimating = false, isDrawDone = true) }
     }
 
     private fun swapMembers(fromPositionId: Long, memberId: Long, toPositionId: Long) {
@@ -185,52 +163,43 @@ class PositionViewModel @Inject constructor(
                 repository.advanceSlot(today, state.currentSlot)
             }
 
-            _uiState.update { it.copy(isDrawDone = false, drawResult = emptyList()) }
+            _uiState.update { it.copy(isDrawDone = false, drawResult = emptyList(), isConfirmedSlot = false) }
         }
     }
 
     private fun cancelDraw() {
-        animationJob?.cancel()
-        _uiState.update { it.copy(isDrawDone = false, isAnimating = false, drawResult = emptyList()) }
+        _uiState.update { it.copy(isDrawDone = false, drawResult = emptyList(), isConfirmedSlot = false) }
     }
 
-    private fun redrawPosition(positionId: Long) {
-        val state = _uiState.value
-        val today = state.todayDate.ifEmpty { LocalDate.now().toString() }
-        val workingMembers = cachedMembers.filter { it.isWorking }
-
+    private fun selectSlot(slot: Int) {
+        val today = _uiState.value.todayDate.ifEmpty { LocalDate.now().toString() }
         viewModelScope.launch {
-            val todayAssignments = repository.getTodayAssignments(today)
-            val targetPosition = cachedPositions.find { it.id == positionId } ?: return@launch
-
-            val alreadyAssigned = state.drawResult
-                .filter { it.position.id != positionId }
-                .flatMap { it.members }
-                .map { it.id }
-                .toSet()
-
-            val available = workingMembers.filter { it.id !in alreadyAssigned }
-            if (available.isEmpty()) return@launch
-
-            val count = state.drawResult.find { it.position.id == positionId }?.members?.size ?: 1
-            val newPairs = repository.performDraw(
-                members = available,
-                positions = listOf(targetPosition),
-                todayAssignments = todayAssignments,
-                currentSlot = state.currentSlot
-            )
-
-            val newMembers = newPairs.take(count).mapNotNull { (memberId, _) ->
-                workingMembers.find { it.id == memberId }?.toUi()
+            repository.setSlot(today, slot)
+            val slotAssignments = repository.getSlotAssignments(today, slot)
+            if (slotAssignments.isNotEmpty()) {
+                val resultItems = buildDrawResult(
+                    pairs = slotAssignments.map { it.memberId to it.positionId },
+                    members = cachedMembers,
+                    positions = cachedPositions
+                )
+                _uiState.update {
+                    it.copy(
+                        currentSlot = slot,
+                        isDrawDone = true,
+                        drawResult = resultItems,
+                        isConfirmedSlot = true
+                    )
+                }
+            } else {
+                _uiState.update {
+                    it.copy(
+                        currentSlot = slot,
+                        isDrawDone = false,
+                        drawResult = emptyList(),
+                        isConfirmedSlot = false
+                    )
+                }
             }
-
-            val updated = state.drawResult.map { item ->
-                if (item.position.id == positionId) {
-                    item.copy(members = newMembers.toMutableList())
-                } else item
-            }
-
-            _uiState.update { it.copy(drawResult = updated) }
         }
     }
 
@@ -242,10 +211,9 @@ class PositionViewModel @Inject constructor(
                 it.copy(
                     currentSlot = 1,
                     isDrawDone = false,
-                    isAnimating = false,
+                    isConfirmedSlot = false,
                     drawResult = emptyList(),
-                    todayHistory = emptyList(),
-                    showDayResetConfirm = false
+                    todayHistory = emptyList()
                 )
             }
         }
@@ -258,19 +226,20 @@ class PositionViewModel @Inject constructor(
                 it.copy(
                     currentSlot = 1,
                     isDrawDone = false,
-                    isAnimating = false,
+                    isConfirmedSlot = false,
                     drawResult = emptyList(),
-                    todayHistory = emptyList(),
-                    showFullResetConfirm = false
+                    todayHistory = emptyList()
                 )
             }
         }
     }
 
-    private fun addMember(name: String) {
+    private fun addMember(name: String, colorHex: String) {
         if (name.isBlank()) return
         viewModelScope.launch {
-            repository.addMember(MemberEntity(name = name.trim(), sortOrder = cachedMembers.size))
+            repository.addMember(
+                MemberEntity(name = name.trim(), colorHex = colorHex, sortOrder = cachedMembers.size)
+            )
         }
     }
 
@@ -284,20 +253,14 @@ class PositionViewModel @Inject constructor(
 
     private fun deleteMember(id: Long) {
         val member = cachedMembers.find { it.id == id } ?: return
-        viewModelScope.launch {
-            repository.deleteMember(member)
-        }
+        viewModelScope.launch { repository.deleteMember(member) }
     }
 
     private fun addPosition(name: String, isMultiPerson: Boolean) {
         if (name.isBlank()) return
         viewModelScope.launch {
             repository.addPosition(
-                PositionEntity(
-                    name = name.trim(),
-                    isMultiPerson = isMultiPerson,
-                    sortOrder = cachedPositions.size
-                )
+                PositionEntity(name = name.trim(), isMultiPerson = isMultiPerson, sortOrder = cachedPositions.size)
             )
         }
     }
@@ -321,6 +284,9 @@ class PositionViewModel @Inject constructor(
         val position = cachedPositions.find { it.id == id } ?: return
         viewModelScope.launch {
             repository.deletePosition(position)
+            _uiState.update {
+                it.copy(isDrawDone = false, drawResult = emptyList(), isConfirmedSlot = false)
+            }
         }
     }
 
@@ -339,14 +305,15 @@ class PositionViewModel @Inject constructor(
         val positionMap = positions.associateBy { it.id }
         val memberMap = members.associateBy { it.id }
 
-        val grouped = pairs.groupBy { it.second }
-        return grouped.mapNotNull { (positionId, memberPairs) ->
-            val position = positionMap[positionId]?.toUi() ?: return@mapNotNull null
-            val memberUis = memberPairs.mapNotNull { (memberId, _) ->
-                memberMap[memberId]?.toUi()
-            }.toMutableList()
-            DrawResultItem(position = position, members = memberUis)
-        }.sortedBy { it.position.sortOrder }
+        return pairs.groupBy { it.second }
+            .mapNotNull { (positionId, memberPairs) ->
+                val position = positionMap[positionId]?.toUi() ?: return@mapNotNull null
+                val memberUis = memberPairs.mapNotNull { (memberId, _) ->
+                    memberMap[memberId]?.toUi()
+                }.toMutableList()
+                DrawResultItem(position = position, members = memberUis)
+            }
+            .sortedBy { it.position.sortOrder }
     }
 
     private suspend fun buildHistory(
@@ -374,7 +341,13 @@ class PositionViewModel @Inject constructor(
             }
     }
 
-    private fun MemberEntity.toUi() = MemberUi(id = id, name = name, isWorking = isWorking)
+    private fun MemberEntity.toUi() = MemberUi(
+        id = id,
+        name = name,
+        isWorking = isWorking,
+        colorHex = colorHex
+    )
+
     private fun PositionEntity.toUi() = PositionUi(
         id = id,
         name = name,
