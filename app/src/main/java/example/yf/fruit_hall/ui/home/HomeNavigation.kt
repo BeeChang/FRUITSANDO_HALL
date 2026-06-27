@@ -1,11 +1,8 @@
 package example.yf.fruit_hall.ui.home
 
 import androidx.navigation.NavGraphBuilder
-import androidx.navigation.compose.composable
-import example.yf.fruit_hall.ui.MainRoute
+import example.yf.fruit_hall.ui.pos.posGraph
 
 fun NavGraphBuilder.homeGraph() {
-    composable<MainRoute.Home> {
-        HomeScreen()
-    }
+    posGraph()
 }
