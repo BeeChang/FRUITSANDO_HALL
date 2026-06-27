@@ -27,6 +27,9 @@ interface MemberDao {
     @Query("UPDATE members SET isWorking = :isWorking WHERE id = :id")
     suspend fun setWorking(id: Long, isWorking: Boolean)
 
+    @Query("UPDATE members SET isWorking = 0")
+    suspend fun resetAllWorking()
+
     @Query("SELECT COUNT(*) FROM members")
     suspend fun count(): Int
 }

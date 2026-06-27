@@ -35,13 +35,19 @@ class PositionRepository @Inject constructor(
 
     suspend fun getOrCreateToday(): WorkDayEntity {
         val today = LocalDate.now().toString()
-        return workDayDao.getByDate(today) ?: WorkDayEntity(date = today).also {
-            workDayDao.upsert(it)
+        return workDayDao.getByDate(today) ?: run {
+            memberDao.resetAllWorking()
+            val newDay = WorkDayEntity(date = today)
+            workDayDao.upsert(newDay)
+            newDay
         }
     }
 
     suspend fun getTodayAssignments(date: String): List<AssignmentEntity> =
         assignmentDao.getByDate(date)
+
+    suspend fun getSlotAssignments(date: String, slot: Int): List<AssignmentEntity> =
+        assignmentDao.getByDateAndSlot(date, slot)
 
     suspend fun confirmAssignments(
         date: String,
@@ -62,6 +68,10 @@ class PositionRepository @Inject constructor(
 
     suspend fun advanceSlot(date: String, currentSlot: Int) {
         workDayDao.upsert(WorkDayEntity(date = date, currentSlot = currentSlot + 1))
+    }
+
+    suspend fun setSlot(date: String, slot: Int) {
+        workDayDao.upsert(WorkDayEntity(date = date, currentSlot = slot))
     }
 
     suspend fun resetToday(date: String) {
@@ -108,7 +118,7 @@ class PositionRepository @Inject constructor(
 
         val result = mutableListOf<Pair<Long, Long>>()
         val assignedMemberIds = mutableSetOf<Long>()
-        val remainingMembers = members.toMutableList()
+        val remainingMembers = members.shuffled().toMutableList()
 
         for ((index, position) in (fixedPositions + multiPositions).withIndex()) {
             val count = slotCounts[index]
