@@ -3,7 +3,10 @@
     "allow": [
       "WebSearch",
       "Bash(./gradlew assembleDebug *)",
-      "Bash(git -C /Users/mac_lee/Desktop/android/yoonforest log --oneline -10)"
+      "Bash(git -C /Users/mac_lee/Desktop/android/yoonforest log --oneline -10)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git *)"
     ]
   }
 }
