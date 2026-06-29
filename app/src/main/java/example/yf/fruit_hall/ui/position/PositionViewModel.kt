@@ -121,7 +121,7 @@ class PositionViewModel @Inject constructor(
                 currentSlot = state.currentSlot
             )
             val resultItems = buildDrawResult(drawPairs, workingMembers, cachedPositions)
-            _uiState.update { it.copy(drawResult = resultItems, isDrawDone = true) }
+            _uiState.update { it.copy(drawResult = resultItems, isDrawDone = true, isConfirmedSlot = false) }
         }
     }
 
@@ -146,7 +146,7 @@ class PositionViewModel @Inject constructor(
             toItem.members.add(memberToMove)
         }
 
-        _uiState.update { it.copy(drawResult = currentResult) }
+        _uiState.update { it.copy(drawResult = currentResult, isConfirmedSlot = false) }
     }
 
     private fun confirmDraw() {
@@ -173,9 +173,7 @@ class PositionViewModel @Inject constructor(
 
             _uiState.update {
                 it.copy(
-                    isDrawDone = false,
-                    drawResult = emptyList(),
-                    isConfirmedSlot = false,
+                    isConfirmedSlot = true,
                     currentSlot = newSlot,
                     todayHistory = history
                 )

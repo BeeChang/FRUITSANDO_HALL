@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Tune
@@ -144,45 +143,26 @@ fun PositionScreen(
                             tonalElevation = 2.dp,
                             color = MaterialTheme.colorScheme.surface
                         ) {
-                            if (uiState.isConfirmedSlot) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 20.dp, vertical = 12.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.CheckCircle,
-                                            contentDescription = null,
-                                            tint = AppTheme.colors.success500,
-                                            modifier = Modifier.size(18.dp)
-                                        )
-                                        Text(
-                                            text = "확정된 배정",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = AppTheme.colors.success500,
-                                            fontWeight = FontWeight.SemiBold
-                                        )
-                                    }
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 20.dp, vertical = 12.dp),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End)
+                            ) {
+                                if (uiState.isConfirmedSlot) {
+                                    PositionActionButton(
+                                        text = "다시 섞기",
+                                        bgColor = reshuffleBtnBg,
+                                        textColor = reshuffleBtnText,
+                                        onClick = { viewModel.onEvent(PositionEvent.StartDraw) }
+                                    )
                                     PositionActionButton(
                                         text = "닫기",
                                         bgColor = closeBtnBg,
                                         textColor = closeBtnText,
                                         onClick = { viewModel.onEvent(PositionEvent.CancelDraw) }
                                     )
-                                }
-                            } else {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 20.dp, vertical = 12.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End)
-                                ) {
+                                } else {
                                     PositionActionButton(
                                         text = "취소",
                                         bgColor = cancelBtnBg,

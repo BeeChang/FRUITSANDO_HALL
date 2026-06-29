@@ -269,7 +269,8 @@ private fun ResultCard(
                     Text(
                         text = "꾹 눌러서 이동",
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.85f)
                     )
                     FlowRow(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
