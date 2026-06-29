@@ -159,11 +159,27 @@ class PositionViewModel @Inject constructor(
             }
             repository.confirmAssignments(today, state.currentSlot, assignments)
 
-            if (state.currentSlot < state.totalSlots) {
+            val newSlot = if (state.currentSlot < state.totalSlots) {
                 repository.advanceSlot(today, state.currentSlot)
+                state.currentSlot + 1
+            } else {
+                state.currentSlot
             }
 
-            _uiState.update { it.copy(isDrawDone = false, drawResult = emptyList(), isConfirmedSlot = false) }
+            // assignmentDao·workDayDao는 Flow 미지원(suspend only)이므로
+            // combine이 재실행되지 않는다. 직접 재조회해 UiState를 갱신한다.
+            val todayAssignments = repository.getTodayAssignments(today)
+            val history = buildHistory(todayAssignments, cachedMembers, cachedPositions)
+
+            _uiState.update {
+                it.copy(
+                    isDrawDone = false,
+                    drawResult = emptyList(),
+                    isConfirmedSlot = false,
+                    currentSlot = newSlot,
+                    todayHistory = history
+                )
+            }
         }
     }
 
