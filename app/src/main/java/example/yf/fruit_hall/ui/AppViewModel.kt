@@ -19,6 +19,7 @@ class AppViewModel @Inject constructor(
     val initialRoute: MainRoute = when (navPrefs.loadLastRoute()) {
         NavigationPreferenceRepository.KEY_BEOMURI -> MainRoute.Beomuri
         NavigationPreferenceRepository.KEY_POSITION -> MainRoute.Position
+        NavigationPreferenceRepository.KEY_CLOCK -> MainRoute.Clock
         else -> MainRoute.Pos
     }
 
@@ -40,6 +41,7 @@ class AppViewModel @Inject constructor(
             MainRoute.Pos -> NavigationPreferenceRepository.KEY_POS
             MainRoute.Beomuri -> NavigationPreferenceRepository.KEY_BEOMURI
             MainRoute.Position -> NavigationPreferenceRepository.KEY_POSITION
+            MainRoute.Clock -> NavigationPreferenceRepository.KEY_CLOCK
         }
         navPrefs.saveLastRoute(key)
     }

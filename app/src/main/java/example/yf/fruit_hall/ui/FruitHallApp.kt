@@ -26,6 +26,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import example.yf.fruit_hall.ui.beomuri.beomuriGraph
+import example.yf.fruit_hall.ui.clock.clockGraph
 import example.yf.fruit_hall.ui.pos.posGraph
 import example.yf.fruit_hall.ui.position.positionGraph
 
@@ -82,6 +83,7 @@ fun FruitHallApp(
                 posGraph()
                 beomuriGraph()
                 positionGraph()
+                clockGraph()
             }
         }
 

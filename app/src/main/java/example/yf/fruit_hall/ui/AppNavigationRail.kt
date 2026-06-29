@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.Blender
 import androidx.compose.material.icons.filled.Casino
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.PointOfSale
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -58,6 +59,13 @@ private val railItems = listOf(
         icon = Icons.Default.Casino,
         isSelected = { it?.hasRoute<MainRoute.Position>() ?: false },
     ),
+    RailItemData(
+        route = MainRoute.Clock,
+        labelRes = R.string.nav_clock,
+        cdRes = R.string.cd_nav_clock,
+        icon = Icons.Default.Schedule,
+        isSelected = { it?.hasRoute<MainRoute.Clock>() ?: false },
+    ),
 )
 
 @Composable
@@ -71,6 +79,7 @@ fun AppNavigationRail(
         MainRoute.Pos      to Color(0xFF89C4F4),  // 소프트 스카이블루
         MainRoute.Beomuri  to Color(0xFF85D9B5),  // 소프트 민트그린
         MainRoute.Position to Color(0xFFFF9BB5),  // 소프트 로즈핑크
+        MainRoute.Clock    to Color(0xFFFFD580),  // 소프트 앰버
     )
 
     NavigationRail {
