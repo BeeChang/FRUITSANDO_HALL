@@ -66,6 +66,8 @@ sealed interface PositionEvent {
     data object ResetToday : PositionEvent
     data object ResetAll : PositionEvent
 
+    data class ReorderMembers(val orderedIds: List<Long>) : PositionEvent
+
     data class AddMember(val name: String, val colorHex: String) : PositionEvent
     data class UpdateMember(val id: Long, val name: String) : PositionEvent
     data class DeleteMember(val id: Long) : PositionEvent

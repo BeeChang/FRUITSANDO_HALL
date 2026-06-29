@@ -30,6 +30,9 @@ interface MemberDao {
     @Query("UPDATE members SET isWorking = 0")
     suspend fun resetAllWorking()
 
+    @Query("UPDATE members SET sortOrder = :sortOrder WHERE id = :id")
+    suspend fun updateSortOrder(id: Long, sortOrder: Int)
+
     @Query("SELECT COUNT(*) FROM members")
     suspend fun count(): Int
 }

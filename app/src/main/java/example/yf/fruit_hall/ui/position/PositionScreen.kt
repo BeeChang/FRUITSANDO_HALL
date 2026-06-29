@@ -115,7 +115,8 @@ fun PositionScreen(
             positions = uiState.positions,
             onToggleWorking = { viewModel.onEvent(PositionEvent.ToggleWorking(it)) },
             onManageClick = { viewModel.onEvent(PositionEvent.ShowMemberDialog) },
-            onDeleteMember = { viewModel.onEvent(PositionEvent.DeleteMember(it)) }
+            onDeleteMember = { viewModel.onEvent(PositionEvent.DeleteMember(it)) },
+            onReorderMembers = { ids -> viewModel.onEvent(PositionEvent.ReorderMembers(ids)) }
         )
 
         VerticalDivider(modifier = Modifier.fillMaxHeight())

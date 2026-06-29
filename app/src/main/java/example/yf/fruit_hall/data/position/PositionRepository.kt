@@ -84,6 +84,10 @@ class PositionRepository @Inject constructor(
         workDayDao.deleteAll()
     }
 
+    suspend fun reorderMembers(orderedIds: List<Long>) {
+        orderedIds.forEachIndexed { index, id -> memberDao.updateSortOrder(id, index) }
+    }
+
     suspend fun addMember(member: MemberEntity) = memberDao.insert(member)
     suspend fun updateMember(member: MemberEntity) = memberDao.update(member)
     suspend fun deleteMember(member: MemberEntity) = memberDao.delete(member)

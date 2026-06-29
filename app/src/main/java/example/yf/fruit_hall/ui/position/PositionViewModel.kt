@@ -75,6 +75,8 @@ class PositionViewModel @Inject constructor(
             is PositionEvent.ResetToday -> resetToday()
             is PositionEvent.ResetAll -> resetAll()
 
+            is PositionEvent.ReorderMembers -> reorderMembers(event.orderedIds)
+
             is PositionEvent.AddMember -> addMember(event.name, event.colorHex)
             is PositionEvent.UpdateMember -> updateMember(event.id, event.name)
             is PositionEvent.DeleteMember -> deleteMember(event.id)
@@ -246,6 +248,10 @@ class PositionViewModel @Inject constructor(
                 )
             }
         }
+    }
+
+    private fun reorderMembers(orderedIds: List<Long>) {
+        viewModelScope.launch { repository.reorderMembers(orderedIds) }
     }
 
     private fun addMember(name: String, colorHex: String) {
