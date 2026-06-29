@@ -22,13 +22,10 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Tune
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
@@ -46,6 +43,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import example.yf.fruit_hall.ui.component.util.ClickShrinkEffect
 import example.yf.fruit_hall.ui.position.component.HistoryDialog
 import example.yf.fruit_hall.ui.position.component.MemberDialog
 import example.yf.fruit_hall.ui.position.component.MemberPanel
@@ -58,6 +56,45 @@ import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+
+private val cancelBtnBg    = Color(0xFFEEEEEE)
+private val cancelBtnText  = Color(0xFF888888)
+private val reshuffleBtnBg = Color(0xFFB3D9FF)
+private val reshuffleBtnText = Color(0xFF2D6FA8)
+private val confirmBtnBg   = Color(0xFFFF9BB5)
+private val confirmBtnText = Color(0xFFFFFFFF)
+private val closeBtnBg     = Color(0xFFEEEEEE)
+private val closeBtnText   = Color(0xFF888888)
+
+@Composable
+private fun PositionActionButton(
+    text: String,
+    bgColor: Color,
+    textColor: Color,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    ClickShrinkEffect(
+        shrinkFactor = 0.93f,
+        onClick = onClick,
+        modifier = modifier
+    ) {
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(14.dp))
+                .background(bgColor)
+                .padding(horizontal = 24.dp, vertical = 12.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = text,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = textColor
+            )
+        }
+    }
+}
 
 @Composable
 fun PositionScreen(
@@ -132,12 +169,12 @@ fun PositionScreen(
                                             fontWeight = FontWeight.SemiBold
                                         )
                                     }
-                                    OutlinedButton(
-                                        onClick = { viewModel.onEvent(PositionEvent.CancelDraw) },
-                                        shape = RoundedCornerShape(12.dp)
-                                    ) {
-                                        Text("닫기")
-                                    }
+                                    PositionActionButton(
+                                        text = "닫기",
+                                        bgColor = closeBtnBg,
+                                        textColor = closeBtnText,
+                                        onClick = { viewModel.onEvent(PositionEvent.CancelDraw) }
+                                    )
                                 }
                             } else {
                                 Row(
@@ -146,27 +183,24 @@ fun PositionScreen(
                                         .padding(horizontal = 20.dp, vertical = 12.dp),
                                     horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End)
                                 ) {
-                                    OutlinedButton(
-                                        onClick = { viewModel.onEvent(PositionEvent.CancelDraw) },
-                                        shape = RoundedCornerShape(12.dp)
-                                    ) {
-                                        Text("취소")
-                                    }
-                                    OutlinedButton(
-                                        onClick = { viewModel.onEvent(PositionEvent.StartDraw) },
-                                        shape = RoundedCornerShape(12.dp)
-                                    ) {
-                                        Text("다시 섞기")
-                                    }
-                                    Button(
-                                        onClick = { viewModel.onEvent(PositionEvent.ConfirmDraw) },
-                                        shape = RoundedCornerShape(12.dp),
-                                        colors = ButtonDefaults.buttonColors(
-                                            containerColor = AppTheme.colors.primary500
-                                        )
-                                    ) {
-                                        Text("확정", fontWeight = FontWeight.SemiBold)
-                                    }
+                                    PositionActionButton(
+                                        text = "취소",
+                                        bgColor = cancelBtnBg,
+                                        textColor = cancelBtnText,
+                                        onClick = { viewModel.onEvent(PositionEvent.CancelDraw) }
+                                    )
+                                    PositionActionButton(
+                                        text = "다시 섞기",
+                                        bgColor = reshuffleBtnBg,
+                                        textColor = reshuffleBtnText,
+                                        onClick = { viewModel.onEvent(PositionEvent.StartDraw) }
+                                    )
+                                    PositionActionButton(
+                                        text = "확정",
+                                        bgColor = confirmBtnBg,
+                                        textColor = confirmBtnText,
+                                        onClick = { viewModel.onEvent(PositionEvent.ConfirmDraw) }
+                                    )
                                 }
                             }
                         }
@@ -371,22 +405,29 @@ private fun DrawPrompt(uiState: PositionUiState, onDraw: () -> Unit) {
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        Button(
-            onClick = onDraw,
-            enabled = canDraw,
-            modifier = Modifier.size(width = 160.dp, height = 52.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = appColors.primary500,
-                disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant
-            )
+        ClickShrinkEffect(
+            shrinkFactor = if (canDraw) 0.93f else 1f,
+            onClick = { if (canDraw) onDraw() }
         ) {
-            Text(
-                text = "뽑기!",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
-            )
+            Box(
+                modifier = Modifier
+                    .width(160.dp)
+                    .height(52.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(
+                        if (canDraw) confirmBtnBg
+                        else MaterialTheme.colorScheme.surfaceVariant
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "뽑기!",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = if (canDraw) Color.White
+                            else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
 
         if (!canDraw) {
