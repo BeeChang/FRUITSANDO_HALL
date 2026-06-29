@@ -13,13 +13,13 @@ class NavigationPreferenceRepository @Inject constructor(
 
     fun saveLastRoute(key: String) = prefs.edit().putString(KEY_LAST_ROUTE, key).apply()
 
-    fun loadLastRoute(): String = prefs.getString(KEY_LAST_ROUTE, KEY_HOME) ?: KEY_HOME
+    fun loadLastRoute(): String = prefs.getString(KEY_LAST_ROUTE, KEY_POS) ?: KEY_POS
 
     companion object {
         private const val PREFS_NAME = "navigation_prefs"
         private const val KEY_LAST_ROUTE = "last_route"
-        const val KEY_HOME = "Home"
-        const val KEY_SECOND = "Second"
-        const val KEY_THIRD = "Third"
+        const val KEY_POS = "Pos"
+        const val KEY_BEOMURI = "Beomuri"
+        const val KEY_POSITION = "Position"
     }
 }

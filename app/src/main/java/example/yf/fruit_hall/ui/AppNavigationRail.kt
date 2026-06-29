@@ -38,25 +38,25 @@ private data class RailItemData(
 
 private val railItems = listOf(
     RailItemData(
-        route = MainRoute.Home,
-        labelRes = R.string.nav_home,
-        cdRes = R.string.cd_nav_home,
+        route = MainRoute.Pos,
+        labelRes = R.string.nav_pos,
+        cdRes = R.string.cd_nav_pos,
         icon = Icons.Default.PointOfSale,
-        isSelected = { it?.hasRoute<MainRoute.Home>() ?: false },
+        isSelected = { it?.hasRoute<MainRoute.Pos>() ?: false },
     ),
     RailItemData(
-        route = MainRoute.Second,
-        labelRes = R.string.nav_second,
-        cdRes = R.string.cd_nav_second,
+        route = MainRoute.Beomuri,
+        labelRes = R.string.nav_beomuri,
+        cdRes = R.string.cd_nav_beomuri,
         icon = Icons.Default.Blender,
-        isSelected = { it?.hasRoute<MainRoute.Second>() ?: false },
+        isSelected = { it?.hasRoute<MainRoute.Beomuri>() ?: false },
     ),
     RailItemData(
-        route = MainRoute.Third,
-        labelRes = R.string.nav_third,
-        cdRes = R.string.cd_nav_third,
+        route = MainRoute.Position,
+        labelRes = R.string.nav_position,
+        cdRes = R.string.cd_nav_position,
         icon = Icons.Default.Casino,
-        isSelected = { it?.hasRoute<MainRoute.Third>() ?: false },
+        isSelected = { it?.hasRoute<MainRoute.Position>() ?: false },
     ),
 )
 
@@ -68,9 +68,9 @@ fun AppNavigationRail(
 ) {
     val appColors = AppTheme.colors
     val routeColorMap = mapOf(
-        MainRoute.Home to appColors.primary500,
-        MainRoute.Second to appColors.success500,
-        MainRoute.Third to appColors.crimson200,
+        MainRoute.Pos      to Color(0xFF89C4F4),  // 소프트 스카이블루
+        MainRoute.Beomuri  to Color(0xFF85D9B5),  // 소프트 민트그린
+        MainRoute.Position to Color(0xFFFF9BB5),  // 소프트 로즈핑크
     )
 
     NavigationRail {

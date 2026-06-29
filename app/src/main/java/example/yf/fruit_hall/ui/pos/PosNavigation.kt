@@ -5,7 +5,7 @@ import androidx.navigation.compose.composable
 import example.yf.fruit_hall.ui.MainRoute
 
 fun NavGraphBuilder.posGraph() {
-    composable<MainRoute.Home> {
+    composable<MainRoute.Pos> {
         EmergencyPosScreen()
     }
 }

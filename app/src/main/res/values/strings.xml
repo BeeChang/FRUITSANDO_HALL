@@ -2,21 +2,21 @@
     <string name="app_name">후산홀</string>
 
     <!-- Navigation Rail -->
-    <string name="nav_home">비상용포스</string>
-    <string name="nav_second">버무리</string>
-    <string name="nav_third">포지션</string>
+    <string name="nav_pos">비상용포스</string>
+    <string name="nav_beomuri">버무리</string>
+    <string name="nav_position">포지션</string>
 
     <!-- Screen Titles -->
-    <string name="screen_home">비상용포스</string>
-    <string name="screen_second">버무리</string>
-    <string name="screen_third">포지션</string>
+    <string name="screen_pos">비상용포스</string>
+    <string name="screen_beomuri">버무리</string>
+    <string name="screen_position">포지션</string>
 
     <!-- Common -->
     <string name="ok">확인</string>
     <string name="cancel">취소</string>
 
     <!-- Content Descriptions -->
-    <string name="cd_nav_home">비상용 포스 화면으로 이동</string>
-    <string name="cd_nav_second">버무리 계산기 화면으로 이동</string>
-    <string name="cd_nav_third">랜덤 포지션 화면으로 이동</string>
+    <string name="cd_nav_pos">비상용 포스 화면으로 이동</string>
+    <string name="cd_nav_beomuri">버무리 계산기 화면으로 이동</string>
+    <string name="cd_nav_position">랜덤 포지션 화면으로 이동</string>
 </resources>
