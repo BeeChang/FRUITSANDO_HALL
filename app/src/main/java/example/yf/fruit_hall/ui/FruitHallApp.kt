@@ -25,9 +25,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import example.yf.fruit_hall.ui.home.homeGraph
 import example.yf.fruit_hall.ui.beomuri.beomuriGraph
-import example.yf.fruit_hall.ui.third.thirdGraph
+import example.yf.fruit_hall.ui.pos.posGraph
+import example.yf.fruit_hall.ui.position.positionGraph
 
 @Composable
 fun FruitHallApp(
@@ -37,13 +37,18 @@ fun FruitHallApp(
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
 
-    LaunchedEffect(Unit) {
-        val initial = viewModel.initialRoute
-        if (initial != MainRoute.Home) {
-            navController.navigate(initial) {
-                popUpTo<MainRoute.Home> { saveState = true }
-                launchSingleTop = true
-                restoreState = true
+    // Activity 재생성(화면 회전) 시 Composition이 새로 만들어져 LaunchedEffect가 항상 실행된다.
+    // ViewModel의 플래그로 최초 1회만 initialRoute로 이동하고, 이후에는 NavController SavedState가 복원한다.
+    LaunchedEffect(viewModel) {
+        if (!viewModel.hasNavigatedInitially) {
+            viewModel.markNavigatedInitially()
+            val initial = viewModel.initialRoute
+            if (initial != MainRoute.Pos) {
+                navController.navigate(initial) {
+                    popUpTo<MainRoute.Pos> { saveState = true }
+                    launchSingleTop = true
+                    restoreState = true
+                }
             }
         }
     }
@@ -60,7 +65,7 @@ fun FruitHallApp(
                     onNavigate = { route ->
                         viewModel.onRouteSelected(route)
                         navController.navigate(route) {
-                            popUpTo<MainRoute.Home> { saveState = true }
+                            popUpTo<MainRoute.Pos> { saveState = true }
                             launchSingleTop = true
                             restoreState = true
                         }
@@ -71,12 +76,12 @@ fun FruitHallApp(
 
             NavHost(
                 navController = navController,
-                startDestination = MainRoute.Home,
+                startDestination = MainRoute.Pos,
                 modifier = Modifier.fillMaxSize()
             ) {
-                homeGraph()
+                posGraph()
                 beomuriGraph()
-                thirdGraph()
+                positionGraph()
             }
         }
 
