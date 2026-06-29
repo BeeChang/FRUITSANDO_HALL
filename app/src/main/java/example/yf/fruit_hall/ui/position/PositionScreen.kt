@@ -252,7 +252,7 @@ private fun PositionTopBar(
     var currentTime by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
-        val fmt = SimpleDateFormat("HH:mm", Locale.KOREA)
+        val fmt = SimpleDateFormat("M.d  HH:mm", Locale.KOREA)
         while (true) {
             currentTime = fmt.format(Date())
             delay(30_000L)
