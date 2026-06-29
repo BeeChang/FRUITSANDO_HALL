@@ -85,7 +85,7 @@ class PositionRepository @Inject constructor(
     }
 
     suspend fun reorderMembers(orderedIds: List<Long>) {
-        orderedIds.forEachIndexed { index, id -> memberDao.updateSortOrder(id, index) }
+        memberDao.updateSortOrders(orderedIds)  // single @Transaction → one Flow emission
     }
 
     suspend fun addMember(member: MemberEntity) = memberDao.insert(member)

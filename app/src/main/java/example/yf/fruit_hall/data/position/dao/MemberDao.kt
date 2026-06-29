@@ -33,6 +33,11 @@ interface MemberDao {
     @Query("UPDATE members SET sortOrder = :sortOrder WHERE id = :id")
     suspend fun updateSortOrder(id: Long, sortOrder: Int)
 
+    @androidx.room.Transaction
+    suspend fun updateSortOrders(orderedIds: List<Long>) {
+        orderedIds.forEachIndexed { index, id -> updateSortOrder(id, index) }
+    }
+
     @Query("SELECT COUNT(*) FROM members")
     suspend fun count(): Int
 }
