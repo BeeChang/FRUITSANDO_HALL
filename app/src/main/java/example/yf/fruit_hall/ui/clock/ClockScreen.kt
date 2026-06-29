@@ -17,6 +17,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import example.yf.fruit_hall.ui.theme.AppTheme
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -27,7 +29,7 @@ fun ClockScreen() {
     var dateText by remember { mutableStateOf("") }
     var timeText by remember { mutableStateOf("") }
 
-    val dateFmt = remember { SimpleDateFormat("yyyy.M.d", Locale.KOREA) }
+    val dateFmt = remember { SimpleDateFormat("M.d", Locale.KOREA) }
     val timeFmt = remember { SimpleDateFormat("HH:mm:ss", Locale.KOREA) }
 
     // 탭을 벗어나면 Composition에서 제거되어 코루틴이 자동 취소됨.
@@ -41,6 +43,8 @@ fun ClockScreen() {
         }
     }
 
+    val primaryColor = AppTheme.colors.primary500
+
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -48,16 +52,17 @@ fun ClockScreen() {
     ) {
         Text(
             text = dateText,
-            style = MaterialTheme.typography.headlineMedium,
+            style = MaterialTheme.typography.displaySmall,
             fontWeight = FontWeight.Normal,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = primaryColor.copy(alpha = 0.6f)
         )
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(4.dp))
         Text(
             text = timeText,
             style = MaterialTheme.typography.displayLarge,
+            fontSize = 100.sp,
             fontWeight = FontWeight.Light,
-            color = MaterialTheme.colorScheme.onSurface
+            color = primaryColor
         )
     }
 }
