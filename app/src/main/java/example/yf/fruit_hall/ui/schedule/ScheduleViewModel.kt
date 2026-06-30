@@ -5,8 +5,6 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import example.yf.fruit_hall.data.schedule.ScheduleRepository
 import example.yf.fruit_hall.data.schedule.entity.ScheduleEntryEntity
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -28,19 +26,16 @@ class ScheduleViewModel @Inject constructor(
     private val monthFmt = DateTimeFormatter.ofPattern("yyyyMM")
     private val dateFmt  = DateTimeFormatter.ofPattern("yyyyMMdd")
 
-    private val _monthKey      = MutableStateFlow(todayMonthKey())
-    private val _isSyncing     = MutableStateFlow(false)
-    private val _revealedDates = MutableStateFlow<Set<String>>(emptySet())
-    private val revealJobs     = mutableMapOf<String, Job>()
+    private val _monthKey  = MutableStateFlow(todayMonthKey())
+    private val _isSyncing = MutableStateFlow(false)
 
     val uiState = combine(
         _monthKey.flatMapLatest { scheduleRepository.observeEntriesForMonth(it) },
         _monthKey.flatMapLatest { scheduleRepository.observeEntriesForMonth(nextMonthKey(it)) },
         _monthKey,
-        _isSyncing,
-        _revealedDates
-    ) { currentEntries, nextEntries, monthKey, isSyncing, revealedDates ->
-        buildUiState(monthKey, currentEntries, nextEntries, isSyncing, revealedDates)
+        _isSyncing
+    ) { currentEntries, nextEntries, monthKey, isSyncing ->
+        buildUiState(monthKey, currentEntries, nextEntries, isSyncing)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ScheduleUiState())
 
     init { sync() }
@@ -48,16 +43,6 @@ class ScheduleViewModel @Inject constructor(
     fun onPrevMonth() = _monthKey.update { prevMonthKey(it) }
     fun onNextMonth() = _monthKey.update { nextMonthKey(it) }
     fun onRefresh()   = sync()
-
-    fun onDateTapped(date: String) {
-        revealJobs[date]?.cancel()
-        _revealedDates.update { it + date }
-        revealJobs[date] = viewModelScope.launch {
-            delay(17_000L)
-            _revealedDates.update { it - date }
-            revealJobs.remove(date)
-        }
-    }
 
     private fun sync() {
         viewModelScope.launch {
@@ -74,8 +59,7 @@ class ScheduleViewModel @Inject constructor(
         monthKey: String,
         currentEntries: List<ScheduleEntryEntity>,
         nextEntries: List<ScheduleEntryEntity>,
-        isSyncing: Boolean,
-        revealedDates: Set<String>
+        isSyncing: Boolean
     ): ScheduleUiState {
         val ym    = YearMonth.parse(monthKey.substring(1), monthFmt)
         val nextYm = ym.plusMonths(1)
@@ -100,7 +84,6 @@ class ScheduleViewModel @Inject constructor(
                     isWeekend  = date.dayOfWeek == DayOfWeek.SATURDAY || date.dayOfWeek == DayOfWeek.SUNDAY,
                     isTrailing = false,
                     isPast     = isCurrentMonth && date.isBefore(today),
-                    isRevealed = dateStr in revealedDates,
                     shifts     = currentShiftMap[dateStr]?.map { ShiftEntry(it.personName, it.shift) } ?: emptyList()
                 )
             )
@@ -118,7 +101,6 @@ class ScheduleViewModel @Inject constructor(
                     isWeekend  = date.dayOfWeek == DayOfWeek.SATURDAY || date.dayOfWeek == DayOfWeek.SUNDAY,
                     isTrailing = true,
                     isPast     = false,
-                    isRevealed = dateStr in revealedDates,
                     shifts     = nextShiftMap[dateStr]?.map { ShiftEntry(it.personName, it.shift) } ?: emptyList()
                 )
             )
@@ -126,9 +108,9 @@ class ScheduleViewModel @Inject constructor(
 
         val weeks = cells.chunked(7)
         return ScheduleUiState(
-            isLoading      = false,
-            isSyncing      = isSyncing,
-            displayMonth   = displayMonth(monthKey),
+            isLoading       = false,
+            isSyncing       = isSyncing,
+            displayMonth    = displayMonth(monthKey),
             currentMonthKey = monthKey,
             isCurrentMonth  = isCurrentMonth,
             weeks           = weeks,
@@ -137,9 +119,9 @@ class ScheduleViewModel @Inject constructor(
         )
     }
 
-    private fun todayMonthKey()   = "s" + LocalDate.now().format(monthFmt)
-    private fun prevMonthKey(key: String) = "s" + YearMonth.parse(key.substring(1), monthFmt).minusMonths(1).format(monthFmt)
-    private fun nextMonthKey(key: String) = "s" + YearMonth.parse(key.substring(1), monthFmt).plusMonths(1).format(monthFmt)
+    private fun todayMonthKey()            = "s" + LocalDate.now().format(monthFmt)
+    private fun prevMonthKey(key: String)  = "s" + YearMonth.parse(key.substring(1), monthFmt).minusMonths(1).format(monthFmt)
+    private fun nextMonthKey(key: String)  = "s" + YearMonth.parse(key.substring(1), monthFmt).plusMonths(1).format(monthFmt)
     private fun displayMonth(key: String): String {
         val ym = YearMonth.parse(key.substring(1), monthFmt)
         return "${ym.year}년 ${ym.monthValue}월"

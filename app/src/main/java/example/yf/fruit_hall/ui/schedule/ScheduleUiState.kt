@@ -18,7 +18,6 @@ data class CalendarDay(
     val isWeekend: Boolean,
     val isTrailing: Boolean,
     val isPast: Boolean,
-    val isRevealed: Boolean,
     val shifts: List<ShiftEntry>
 )
 

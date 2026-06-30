@@ -25,7 +25,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.ZoomIn
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -63,10 +62,10 @@ private val WeekendSat      = Color(0xFF6196FD)
 private val WeekendSun      = Color(0xFFE05F80)
 
 private val shiftChipColor = mapOf(
-    "오픈"    to Color(0xFFB8EDCC),
-    "오픈미들" to Color(0xFFAED9F5),
-    "미들"    to Color(0xFFCDBEEE),
-    "마감"    to Color(0xFFF5B8C4),
+    "오픈"    to Color(0xFFDDF5E8),
+    "오픈미들" to Color(0xFFD5ECFA),
+    "미들"    to Color(0xFFE9E0FA),
+    "마감"    to Color(0xFFFAD8E0),
 )
 private val ChipTextColor  = Color(0xFF1A1A1A)
 private val LABEL_WIDTH_LG = 62.dp   // 가로모드
@@ -192,7 +191,6 @@ fun ScheduleScreen(viewModel: ScheduleViewModel = hiltViewModel()) {
                         weeks        = uiState.weeks,
                         listState    = listState,
                         isPortrait   = isPortrait,
-                        onDateTapped = viewModel::onDateTapped,
                         onShowDetail = { selectedDay = it }
                     )
                 }
@@ -232,7 +230,6 @@ private fun CalendarGrid(
     weeks: List<List<CalendarDay?>>,
     listState: androidx.compose.foundation.lazy.LazyListState,
     isPortrait: Boolean,
-    onDateTapped: (String) -> Unit,
     onShowDetail: (CalendarDay) -> Unit
 ) {
     val cellHeight = if (isPortrait) 165.dp else 145.dp
@@ -244,7 +241,6 @@ private fun CalendarGrid(
                         day          = day,
                         colIdx       = colIdx,
                         isPortrait   = isPortrait,
-                        onDateTapped = onDateTapped,
                         onShowDetail = onShowDetail,
                         modifier     = Modifier.weight(1f)
                     )
@@ -263,14 +259,13 @@ private fun DayCell(
     day: CalendarDay?,
     colIdx: Int,
     isPortrait: Boolean,
-    onDateTapped: (String) -> Unit,
     onShowDetail: (CalendarDay) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val colors   = AppTheme.colors
     val isSatCol = colIdx == 5
     val isSunCol = colIdx == 6
-    val faded    = (day?.isTrailing == true || day?.isPast == true) && day?.isRevealed != true
+    val faded    = day?.isTrailing == true || day?.isPast == true
     val alpha    = if (faded) 0.28f else 1f
     val cellHeight = if (isPortrait) 165.dp else 145.dp
 
@@ -285,7 +280,7 @@ private fun DayCell(
         modifier = modifier
             .height(cellHeight)
             .background(bgColor)
-            .then(if (day != null) Modifier.clickable { onDateTapped(day.date) } else Modifier)
+            .then(if (day != null) Modifier.clickable { onShowDetail(day) } else Modifier)
             .padding(horizontal = if (isPortrait) 5.dp else 8.dp, vertical = 7.dp)
     ) {
         if (day == null) return@Box
@@ -330,17 +325,6 @@ private fun DayCell(
                     )
                 }
                 Spacer(Modifier.weight(1f))
-                // 돋보기 아이콘
-                if (day.shifts.isNotEmpty()) {
-                    Icon(
-                        imageVector = Icons.Default.ZoomIn,
-                        contentDescription = "상세보기",
-                        modifier = Modifier
-                            .size(15.dp)
-                            .clickable { onShowDetail(day) },
-                        tint = colors.grey400.copy(alpha = alpha)
-                    )
-                }
             }
 
             // 근무 그룹
