@@ -157,7 +157,7 @@ fun ClockScreen(viewModel: ClockViewModel = hiltViewModel()) {
                     tint               = if (locked) colors.grey400 else BtnTextColor,
                 )
                 Text(
-                    text       = if (locked) "잠금" else "캐치테이블",
+                    text       = if (locked) "잠금" else "클릭시 캐치테이블 이동",
                     style      = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Bold,
                     color      = if (locked) colors.grey400 else BtnTextColor
