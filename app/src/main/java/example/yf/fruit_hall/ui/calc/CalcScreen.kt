@@ -127,13 +127,6 @@ private fun KeypadCard(
     isPortrait: Boolean,
     modifier: Modifier = Modifier
 ) {
-    // 세로: 행 높이 고정 → 가로: weight로 균등 분배
-    @Composable
-    fun rowModifier() = if (isPortrait)
-        Modifier.fillMaxWidth().height(PORTRAIT_ROW_HEIGHT)
-    else
-        Modifier.fillMaxWidth().weight(1f)
-
     Card(
         modifier  = modifier.fillMaxWidth(),
         shape     = RoundedCornerShape(20.dp),
@@ -146,36 +139,42 @@ private fun KeypadCard(
                 .padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            // ColumnScope 안에서 정의해야 weight(1f) 사용 가능
+            val rowMod = if (isPortrait)
+                Modifier.fillMaxWidth().height(PORTRAIT_ROW_HEIGHT)
+            else
+                Modifier.fillMaxWidth().weight(1f)
+
             // Row 1: AC  ⌫  ×0.85  ÷
-            Row(rowModifier(), Arrangement.spacedBy(8.dp)) {
+            Row(rowMod, Arrangement.spacedBy(8.dp)) {
                 CalcBtn("AC", AcBg,          AcText,          Modifier.weight(1f)) { viewModel.onClear() }
                 CalcBtn("⌫", colors.grey100, colors.grey700,  Modifier.weight(1f)) { viewModel.onBackspace() }
                 Scale085Btn(Modifier.weight(1f))                                    { viewModel.onScale085() }
                 CalcBtn("÷", CalcAccentSoft, CalcAccentText,  Modifier.weight(1f)) { viewModel.onOperator("÷") }
             }
             // Row 2: 7  8  9  ×
-            Row(rowModifier(), Arrangement.spacedBy(8.dp)) {
+            Row(rowMod, Arrangement.spacedBy(8.dp)) {
                 listOf("7", "8", "9").forEach { d ->
                     CalcBtn(d, colors.grey50, colors.grey800, Modifier.weight(1f))  { viewModel.onDigit(d) }
                 }
                 CalcBtn("×", CalcAccentSoft, CalcAccentText, Modifier.weight(1f))  { viewModel.onOperator("×") }
             }
             // Row 3: 4  5  6  −
-            Row(rowModifier(), Arrangement.spacedBy(8.dp)) {
+            Row(rowMod, Arrangement.spacedBy(8.dp)) {
                 listOf("4", "5", "6").forEach { d ->
                     CalcBtn(d, colors.grey50, colors.grey800, Modifier.weight(1f))  { viewModel.onDigit(d) }
                 }
                 CalcBtn("−", CalcAccentSoft, CalcAccentText, Modifier.weight(1f))  { viewModel.onOperator("−") }
             }
             // Row 4: 1  2  3  +
-            Row(rowModifier(), Arrangement.spacedBy(8.dp)) {
+            Row(rowMod, Arrangement.spacedBy(8.dp)) {
                 listOf("1", "2", "3").forEach { d ->
                     CalcBtn(d, colors.grey50, colors.grey800, Modifier.weight(1f))  { viewModel.onDigit(d) }
                 }
                 CalcBtn("+", CalcAccentSoft, CalcAccentText, Modifier.weight(1f))  { viewModel.onOperator("+") }
             }
             // Row 5: 0(2칸)  .  =
-            Row(rowModifier(), Arrangement.spacedBy(8.dp)) {
+            Row(rowMod, Arrangement.spacedBy(8.dp)) {
                 CalcBtn("0", colors.grey50, colors.grey800, Modifier.weight(2f))    { viewModel.onDigit("0") }
                 CalcBtn(".", colors.grey50, colors.grey800, Modifier.weight(1f))    { viewModel.onDigit(".") }
                 CalcBtn("=", CalcAccent,   Color.White,    Modifier.weight(1f))     { viewModel.onEquals() }
