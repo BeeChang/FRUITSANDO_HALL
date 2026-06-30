@@ -24,6 +24,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -415,48 +416,58 @@ private fun DayDetailDialog(day: CalendarDay, onDismiss: () -> Unit) {
 
     Dialog(onDismissRequest = onDismiss) {
         Card(
-            modifier  = Modifier.fillMaxWidth(0.55f),
-            shape     = RoundedCornerShape(24.dp),
+            modifier  = Modifier.fillMaxWidth(0.78f),
+            shape     = RoundedCornerShape(28.dp),
             colors    = CardDefaults.cardColors(containerColor = colors.white),
-            elevation = CardDefaults.cardElevation(8.dp)
+            elevation = CardDefaults.cardElevation(12.dp)
         ) {
-            Column(modifier = Modifier.padding(28.dp)) {
-                // 헤더
+            Column(modifier = Modifier.padding(32.dp)) {
+                // 헤더: 날짜 + 오늘 뱃지 + X 닫기
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     if (day.isToday) {
                         Box(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(6.dp))
+                                .clip(RoundedCornerShape(8.dp))
                                 .background(ScheduleAccent)
-                                .padding(horizontal = 8.dp, vertical = 3.dp)
+                                .padding(horizontal = 10.dp, vertical = 4.dp)
                         ) {
-                            Text("오늘", style = MaterialTheme.typography.labelMedium,
+                            Text("오늘", style = MaterialTheme.typography.labelLarge,
                                 fontWeight = FontWeight.Bold, color = Color.White)
                         }
+                        Spacer(Modifier.width(10.dp))
                     }
                     Text(
                         text = formatDayHeader(day.date),
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
-                        color = colors.grey900
+                        color = colors.grey900,
+                        modifier = Modifier.weight(1f)
                     )
+                    ClickShrinkEffect(onClick = onDismiss) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "닫기",
+                            modifier = Modifier.size(28.dp),
+                            tint = colors.grey400
+                        )
+                    }
                 }
 
-                Spacer(Modifier.height(16.dp))
-                HorizontalDivider(color = Color(0x15000000))
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(20.dp))
+                HorizontalDivider(color = Color(0x18000000))
+                Spacer(Modifier.height(20.dp))
 
                 if (day.shifts.isEmpty()) {
-                    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        Text("스케줄 없음", style = MaterialTheme.typography.bodyMedium,
+                    Box(Modifier.fillMaxWidth().padding(vertical = 16.dp), contentAlignment = Alignment.Center) {
+                        Text("스케줄 없음", style = MaterialTheme.typography.bodyLarge,
                             color = colors.grey400)
                     }
                 } else {
                     val grouped = day.shifts.groupBy { it.shift }
-                    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
                         SHIFT_ORDER.forEach { shiftType ->
                             val persons = grouped[shiftType] ?: return@forEach
                             DetailShiftRow(shiftType = shiftType, persons = persons)
@@ -476,26 +487,26 @@ private fun DetailShiftRow(shiftType: String, persons: List<ShiftEntry>) {
     Row(verticalAlignment = Alignment.Top) {
         Text(
             text = "$shiftType :",
-            modifier = Modifier.width(72.dp).padding(top = 4.dp),
-            style = MaterialTheme.typography.labelLarge,
+            modifier = Modifier.width(88.dp).padding(top = 6.dp),
+            style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold,
             color = colors.grey700
         )
         FlowRow(
             modifier = Modifier.weight(1f),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             persons.forEach { entry ->
                 Box(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
+                        .clip(RoundedCornerShape(10.dp))
                         .background(chipBg)
-                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
                 ) {
                     Text(
                         text = entry.personName,
-                        style = MaterialTheme.typography.labelLarge,
+                        style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         color = ChipTextColor
                     )
