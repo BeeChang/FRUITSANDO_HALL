@@ -7,4 +7,5 @@ sealed interface MainRoute {
     @Serializable data object Beomuri : MainRoute
     @Serializable data object Position : MainRoute
     @Serializable data object Clock : MainRoute
+    @Serializable data object Schedule : MainRoute
 }

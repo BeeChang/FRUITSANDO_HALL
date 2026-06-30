@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Blender
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Casino
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.PointOfSale
@@ -66,6 +67,13 @@ private val railItems = listOf(
         icon = Icons.Default.Schedule,
         isSelected = { it?.hasRoute<MainRoute.Clock>() ?: false },
     ),
+    RailItemData(
+        route = MainRoute.Schedule,
+        labelRes = R.string.nav_schedule,
+        cdRes = R.string.cd_nav_schedule,
+        icon = Icons.Default.CalendarMonth,
+        isSelected = { it?.hasRoute<MainRoute.Schedule>() ?: false },
+    ),
 )
 
 @Composable
@@ -80,6 +88,7 @@ fun AppNavigationRail(
         MainRoute.Beomuri  to Color(0xFF85D9B5),  // 소프트 민트그린
         MainRoute.Position to Color(0xFFFF9BB5),  // 소프트 로즈핑크
         MainRoute.Clock    to Color(0xFFFFD580),  // 소프트 앰버
+        MainRoute.Schedule to Color(0xFFCE93D8),  // 소프트 라벤더
     )
 
     NavigationRail {

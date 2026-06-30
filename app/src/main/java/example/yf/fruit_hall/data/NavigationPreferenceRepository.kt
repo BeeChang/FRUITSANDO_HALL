@@ -22,5 +22,6 @@ class NavigationPreferenceRepository @Inject constructor(
         const val KEY_BEOMURI = "Beomuri"
         const val KEY_POSITION = "Position"
         const val KEY_CLOCK = "Clock"
+        const val KEY_SCHEDULE = "Schedule"
     }
 }

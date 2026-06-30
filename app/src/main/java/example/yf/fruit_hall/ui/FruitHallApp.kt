@@ -29,6 +29,7 @@ import example.yf.fruit_hall.ui.beomuri.beomuriGraph
 import example.yf.fruit_hall.ui.clock.clockGraph
 import example.yf.fruit_hall.ui.pos.posGraph
 import example.yf.fruit_hall.ui.position.positionGraph
+import example.yf.fruit_hall.ui.schedule.scheduleGraph
 
 @Composable
 fun FruitHallApp(
@@ -84,6 +85,7 @@ fun FruitHallApp(
                 beomuriGraph()
                 positionGraph()
                 clockGraph()
+                scheduleGraph()
             }
         }
 
