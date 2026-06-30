@@ -3,7 +3,7 @@ agp = "8.9.0"
 kotlin = "2.1.10"
 ksp = "2.1.10-1.0.31"
 googleServices = "4.5.0"
-firebaseBom = "34.0.0"
+firebaseBom = "34.11.0"
 
 coreKtx = "1.10.1"
 lifecycleRuntimeKtx = "2.8.7"
@@ -84,6 +84,8 @@ room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 
 # Firebase
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
+firebase-config = { module = "com.google.firebase:firebase-config" }
+firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
