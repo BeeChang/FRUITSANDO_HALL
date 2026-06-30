@@ -6,7 +6,6 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import example.yf.fruit_hall.data.ExternalAppRepository
 import example.yf.fruit_hall.data.NavigationPreferenceRepository
 import example.yf.fruit_hall.data.schedule.ScheduleRepository
 import kotlinx.coroutines.launch
@@ -17,8 +16,7 @@ import javax.inject.Inject
 @HiltViewModel
 class AppViewModel @Inject constructor(
     private val navPrefs: NavigationPreferenceRepository,
-    private val scheduleRepository: ScheduleRepository,
-    private val externalAppRepo: ExternalAppRepository
+    private val scheduleRepository: ScheduleRepository
 ) : ViewModel() {
 
     init {
@@ -27,18 +25,6 @@ class AppViewModel @Inject constructor(
 
     var isRailVisible by mutableStateOf(true)
         private set
-
-    var externalPackageName by mutableStateOf(externalAppRepo.getPackageName())
-        private set
-    var isExternalTabLocked by mutableStateOf(externalAppRepo.isLocked())
-        private set
-
-    fun saveExternalSettings(pkg: String, locked: Boolean) {
-        externalAppRepo.savePackageName(pkg)
-        externalPackageName = pkg
-        externalAppRepo.saveLocked(locked)
-        isExternalTabLocked = locked
-    }
 
     val initialRoute: MainRoute = when (navPrefs.loadLastRoute()) {
         NavigationPreferenceRepository.KEY_BEOMURI -> MainRoute.Beomuri

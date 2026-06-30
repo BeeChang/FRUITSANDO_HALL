@@ -64,19 +64,16 @@ fun FruitHallApp(
                 exit = slideOutHorizontally { -it }
             ) {
                 AppNavigationRail(
-                    currentDestination  = currentDestination,
-                    onNavigate          = { route ->
+                    currentDestination = currentDestination,
+                    onNavigate = { route ->
                         viewModel.onRouteSelected(route)
                         navController.navigate(route) {
                             popUpTo<MainRoute.Pos> { saveState = true }
                             launchSingleTop = true
-                            restoreState    = true
+                            restoreState = true
                         }
                     },
-                    onToggleRail          = viewModel::toggleRail,
-                    externalPackageName   = viewModel.externalPackageName,
-                    isExternalTabLocked   = viewModel.isExternalTabLocked,
-                    onExternalSettingsSave = viewModel::saveExternalSettings,
+                    onToggleRail = viewModel::toggleRail
                 )
             }
 
