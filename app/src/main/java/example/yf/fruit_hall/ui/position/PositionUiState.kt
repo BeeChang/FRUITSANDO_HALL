@@ -3,6 +3,7 @@ package example.yf.fruit_hall.ui.position
 data class PositionUiState(
     val members: List<MemberUi> = emptyList(),
     val positions: List<PositionUi> = emptyList(),
+    val enabledPositionIds: Set<Long> = emptySet(),
     val currentSlot: Int = 1,
     val totalSlots: Int = 3,
     val drawResult: List<DrawResultItem> = emptyList(),
@@ -67,6 +68,7 @@ sealed interface PositionEvent {
     data object ResetAll : PositionEvent
 
     data class ReorderMembers(val orderedIds: List<Long>) : PositionEvent
+    data class TogglePositionEnabled(val positionId: Long) : PositionEvent
 
     data class AddMember(val name: String, val colorHex: String) : PositionEvent
     data class UpdateMember(val id: Long, val name: String) : PositionEvent

@@ -49,9 +49,22 @@ class PositionViewModel @Inject constructor(
                 val history = buildHistory(todayAssignments, members, positions)
 
                 _uiState.update { current ->
+                    val newPositionIds = positions.map { it.id }.toSet()
+                    val prevPositionIds = current.positions.map { it.id }.toSet()
+                    val updatedEnabled = when {
+                        // 첫 로드: 전체 활성화
+                        current.enabledPositionIds.isEmpty() -> newPositionIds
+                        else -> {
+                            // 기존 활성 상태 유지 + 새로 추가된 포지션은 자동 활성화
+                            val kept = current.enabledPositionIds.intersect(newPositionIds)
+                            val added = newPositionIds - prevPositionIds
+                            kept + added
+                        }
+                    }
                     current.copy(
                         members = members.map { it.toUi() },
                         positions = positions.map { it.toUi() },
+                        enabledPositionIds = updatedEnabled,
                         totalSlots = settings.totalSlots,
                         currentSlot = workDay.currentSlot,
                         memberWeights = memberWeights,
@@ -76,6 +89,7 @@ class PositionViewModel @Inject constructor(
             is PositionEvent.ResetAll -> resetAll()
 
             is PositionEvent.ReorderMembers -> reorderMembers(event.orderedIds)
+            is PositionEvent.TogglePositionEnabled -> togglePositionEnabled(event.positionId)
 
             is PositionEvent.AddMember -> addMember(event.name, event.colorHex)
             is PositionEvent.UpdateMember -> updateMember(event.id, event.name)
@@ -113,17 +127,29 @@ class PositionViewModel @Inject constructor(
 
         val state = _uiState.value
         val today = LocalDate.now().toString()
+        val enabledIds = state.enabledPositionIds
+        val activePositions = cachedPositions.filter { enabledIds.isEmpty() || it.id in enabledIds }
+        if (activePositions.isEmpty()) return
 
         viewModelScope.launch {
             val todayAssignments = repository.getTodayAssignments(today)
             val drawPairs = repository.performDraw(
                 members = workingMembers,
-                positions = cachedPositions,
+                positions = activePositions,
                 todayAssignments = todayAssignments,
                 currentSlot = state.currentSlot
             )
             val resultItems = buildDrawResult(drawPairs, workingMembers, cachedPositions)
             _uiState.update { it.copy(drawResult = resultItems, isDrawDone = true, isConfirmedSlot = false) }
+        }
+    }
+
+    private fun togglePositionEnabled(positionId: Long) {
+        _uiState.update { current ->
+            val enabled = current.enabledPositionIds
+            current.copy(
+                enabledPositionIds = if (positionId in enabled) enabled - positionId else enabled + positionId
+            )
         }
     }
 
@@ -161,24 +187,11 @@ class PositionViewModel @Inject constructor(
             }
             repository.confirmAssignments(today, state.currentSlot, assignments)
 
-            val newSlot = if (state.currentSlot < state.totalSlots) {
-                repository.advanceSlot(today, state.currentSlot)
-                state.currentSlot + 1
-            } else {
-                state.currentSlot
-            }
-
-            // assignmentDao·workDayDao는 Flow 미지원(suspend only)이므로
-            // combine이 재실행되지 않는다. 직접 재조회해 UiState를 갱신한다.
             val todayAssignments = repository.getTodayAssignments(today)
             val history = buildHistory(todayAssignments, cachedMembers, cachedPositions)
 
             _uiState.update {
-                it.copy(
-                    isConfirmedSlot = true,
-                    currentSlot = newSlot,
-                    todayHistory = history
-                )
+                it.copy(isConfirmedSlot = true, todayHistory = history)
             }
         }
     }
