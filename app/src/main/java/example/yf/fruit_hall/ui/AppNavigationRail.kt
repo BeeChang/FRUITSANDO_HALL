@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Blender
+import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Casino
 import androidx.compose.material.icons.filled.Close
@@ -54,6 +55,13 @@ private val railItems = listOf(
         isSelected = { it?.hasRoute<MainRoute.Beomuri>() ?: false },
     ),
     RailItemData(
+        route = MainRoute.Calc,
+        labelRes = R.string.nav_calc,
+        cdRes = R.string.cd_nav_calc,
+        icon = Icons.Default.Calculate,
+        isSelected = { it?.hasRoute<MainRoute.Calc>() ?: false },
+    ),
+    RailItemData(
         route = MainRoute.Position,
         labelRes = R.string.nav_position,
         cdRes = R.string.cd_nav_position,
@@ -86,6 +94,7 @@ fun AppNavigationRail(
     val routeIconColorMap = mapOf(
         MainRoute.Pos      to Color(0xFF89C4F4),  // 소프트 스카이블루
         MainRoute.Beomuri  to Color(0xFF85D9B5),  // 소프트 민트그린
+        MainRoute.Calc     to Color(0xFFFFB347),  // 소프트 오렌지
         MainRoute.Position to Color(0xFFFF9BB5),  // 소프트 로즈핑크
         MainRoute.Clock    to Color(0xFFFFD580),  // 소프트 앰버
         MainRoute.Schedule to Color(0xFFCE93D8),  // 소프트 라벤더
@@ -93,6 +102,7 @@ fun AppNavigationRail(
     val routeTextColorMap = mapOf(
         MainRoute.Pos      to Color(0xFF1565A8),  // 진한 블루
         MainRoute.Beomuri  to Color(0xFF1A7A52),  // 진한 그린
+        MainRoute.Calc     to Color(0xFFC25000),  // 진한 오렌지
         MainRoute.Position to Color(0xFFB02060),  // 진한 핑크
         MainRoute.Clock    to Color(0xFF8C6200),  // 진한 앰버
         MainRoute.Schedule to Color(0xFF6A3D9A),  // 진한 퍼플

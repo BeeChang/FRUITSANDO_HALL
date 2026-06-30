@@ -20,6 +20,7 @@ class NavigationPreferenceRepository @Inject constructor(
         private const val KEY_LAST_ROUTE = "last_route"
         const val KEY_POS = "Pos"
         const val KEY_BEOMURI = "Beomuri"
+        const val KEY_CALC = "Calc"
         const val KEY_POSITION = "Position"
         const val KEY_CLOCK = "Clock"
         const val KEY_SCHEDULE = "Schedule"
