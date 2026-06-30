@@ -83,12 +83,19 @@ fun AppNavigationRail(
     onToggleRail: () -> Unit,
 ) {
     val appColors = AppTheme.colors
-    val routeColorMap = mapOf(
+    val routeIconColorMap = mapOf(
         MainRoute.Pos      to Color(0xFF89C4F4),  // 소프트 스카이블루
         MainRoute.Beomuri  to Color(0xFF85D9B5),  // 소프트 민트그린
         MainRoute.Position to Color(0xFFFF9BB5),  // 소프트 로즈핑크
         MainRoute.Clock    to Color(0xFFFFD580),  // 소프트 앰버
         MainRoute.Schedule to Color(0xFFCE93D8),  // 소프트 라벤더
+    )
+    val routeTextColorMap = mapOf(
+        MainRoute.Pos      to Color(0xFF1565A8),  // 진한 블루
+        MainRoute.Beomuri  to Color(0xFF1A7A52),  // 진한 그린
+        MainRoute.Position to Color(0xFFB02060),  // 진한 핑크
+        MainRoute.Clock    to Color(0xFF8C6200),  // 진한 앰버
+        MainRoute.Schedule to Color(0xFF6A3D9A),  // 진한 퍼플
     )
 
     NavigationRail {
@@ -105,7 +112,8 @@ fun AppNavigationRail(
         }
         Spacer(Modifier.height(4.dp))
         railItems.forEach { item ->
-            val iconColor = routeColorMap[item.route] ?: Color.Unspecified
+            val iconColor = routeIconColorMap[item.route] ?: Color.Unspecified
+            val textColor = routeTextColorMap[item.route] ?: Color.Unspecified
             NavigationRailItem(
                 selected = item.isSelected(currentDestination),
                 onClick = { onNavigate(item.route) },
@@ -126,8 +134,8 @@ fun AppNavigationRail(
                 colors = NavigationRailItemDefaults.colors(
                     selectedIconColor = iconColor,
                     unselectedIconColor = iconColor,
-                    selectedTextColor = iconColor,
-                    unselectedTextColor = iconColor,
+                    selectedTextColor = textColor,
+                    unselectedTextColor = textColor,
                     indicatorColor = iconColor.copy(alpha = 0.12f),
                 ),
             )
