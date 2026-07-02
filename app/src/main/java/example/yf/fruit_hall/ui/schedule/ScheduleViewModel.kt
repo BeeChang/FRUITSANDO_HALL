@@ -42,15 +42,15 @@ class ScheduleViewModel @Inject constructor(
 
     fun onPrevMonth() = _monthKey.update { prevMonthKey(it) }
     fun onNextMonth() = _monthKey.update { nextMonthKey(it) }
-    fun onRefresh()   = sync()
+    fun onRefresh()   = sync(force = true)
 
-    private fun sync() {
+    private fun sync(force: Boolean = false) {
         viewModelScope.launch {
             _isSyncing.value = true
             val today = LocalDate.now()
-            listOf(today, today.plusMonths(1), today.plusMonths(2)).forEach { date ->
-                runCatching { scheduleRepository.syncIfNeeded("s" + date.format(monthFmt)) }
-            }
+            val monthKeys = listOf(today, today.plusMonths(1), today.plusMonths(2))
+                .map { "s" + it.format(monthFmt) }
+            runCatching { scheduleRepository.syncAll(monthKeys, force = force) }
             _isSyncing.value = false
         }
     }

@@ -9,9 +9,15 @@ import javax.inject.Singleton
 class RemoteConfigRepository @Inject constructor(
     private val remoteConfig: FirebaseRemoteConfig
 ) {
-    suspend fun fetchScheduleJson(monthKey: String): String? {
-        remoteConfig.fetchAndActivate().await()
-        val json = remoteConfig.getString(monthKey)
-        return json.ifEmpty { null }
+    suspend fun fetchAndActivate(force: Boolean = false) {
+        if (force) {
+            remoteConfig.fetch(0L).await()
+            remoteConfig.activate().await()
+        } else {
+            remoteConfig.fetchAndActivate().await()
+        }
     }
+
+    fun getScheduleJson(monthKey: String): String? =
+        remoteConfig.getString(monthKey).ifEmpty { null }
 }

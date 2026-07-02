@@ -17,37 +17,45 @@ class ScheduleRepository @Inject constructor(
     private val scheduleDao: ScheduleDao
 ) {
     private val json = Json { ignoreUnknownKeys = true }
+    private val syncIntervalMs = 24 * 60 * 60 * 1000L // 하루
 
-    suspend fun syncIfNeeded(monthKey: String) {
-        val jsonStr = remoteConfigRepository.fetchScheduleJson(monthKey) ?: run {
-            Timber.d("[Schedule] $monthKey → Remote Config에 데이터 없음, skip")
+    suspend fun syncAll(monthKeys: List<String>, force: Boolean = false) {
+        val staleKeys = if (force) monthKeys else monthKeys.filter { key ->
+            val meta = scheduleDao.getMetadata(key)
+            meta == null || System.currentTimeMillis() - meta.syncedAt >= syncIntervalMs
+        }
+        if (staleKeys.isEmpty()) {
+            Timber.d("[Schedule] 모든 월 캐시 유효, skip")
             return
         }
-        val response = json.decodeFromString<ScheduleResponse>(jsonStr)
 
-        val existing = scheduleDao.getMetadata(monthKey)
-        if (existing?.updated == response.updated) {
-            Timber.d("[Schedule] $monthKey → updated(${response.updated}) 동일, skip")
-            return
-        }
+        remoteConfigRepository.fetchAndActivate(force = force)
 
-        val entries = response.schedules.flatMap { day ->
-            day.shifts.map { (person, shift) ->
-                ScheduleEntryEntity(
-                    monthKey = monthKey,
-                    date = day.date,
-                    personName = person,
-                    shift = shift
+        staleKeys.forEach { monthKey ->
+            runCatching {
+                val jsonStr = remoteConfigRepository.getScheduleJson(monthKey) ?: run {
+                    Timber.d("[Schedule] $monthKey → Remote Config에 데이터 없음, skip")
+                    return@forEach
+                }
+                val response = json.decodeFromString<ScheduleResponse>(jsonStr)
+                val existing = scheduleDao.getMetadata(monthKey)
+                if (existing?.updated == response.updated) {
+                    scheduleDao.upsertMetadata(existing.copy(syncedAt = System.currentTimeMillis()))
+                    Timber.d("[Schedule] $monthKey → updated 동일, syncedAt만 갱신")
+                    return@forEach
+                }
+                val entries = response.schedules.flatMap { day ->
+                    day.shifts.map { (person, shift) ->
+                        ScheduleEntryEntity(monthKey = monthKey, date = day.date, personName = person, shift = shift)
+                    }
+                }
+                scheduleDao.replaceMonthData(
+                    ScheduleMetadataEntity(monthKey, response.updated, System.currentTimeMillis()),
+                    entries
                 )
-            }
+                Timber.d("[Schedule] $monthKey → DB 갱신 완료 (${entries.size}건)")
+            }.onFailure { Timber.e(it, "[Schedule] $monthKey sync 실패") }
         }
-        val metadata = ScheduleMetadataEntity(
-            monthKey = monthKey,
-            updated = response.updated,
-            syncedAt = System.currentTimeMillis()
-        )
-        scheduleDao.replaceMonthData(metadata, entries)
-        Timber.d("[Schedule] $monthKey → DB 갱신 완료 (${entries.size}건, updated=${response.updated})")
     }
 
     fun observeEntriesForMonth(monthKey: String): Flow<List<ScheduleEntryEntity>> =
