@@ -2,6 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <queries>
+        <package android:name="co.kr.catchtable.waiting" />
+    </queries>
+
     <application
         android:name=".FruitHallApplication"
         android:allowBackup="true"
