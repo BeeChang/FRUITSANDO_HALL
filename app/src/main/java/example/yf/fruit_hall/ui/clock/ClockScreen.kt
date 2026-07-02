@@ -1,6 +1,7 @@
 package example.yf.fruit_hall.ui.clock
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,11 +11,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -34,6 +39,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -83,16 +89,21 @@ fun ClockScreen(viewModel: ClockViewModel = hiltViewModel()) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+            val dateFontScale = viewModel.dateFontScale
+            val timeFontScale = viewModel.timeFontScale
+
             Row(verticalAlignment = Alignment.Bottom) {
                 Text(
                     text       = dateMonth,
                     style      = MaterialTheme.typography.displaySmall,
+                    fontSize   = MaterialTheme.typography.displaySmall.fontSize * dateFontScale,
                     fontWeight = FontWeight.Bold,
                     color      = primaryColor.copy(alpha = 0.6f)
                 )
                 Text(
                     text     = "월",
                     style    = MaterialTheme.typography.titleMedium,
+                    fontSize = MaterialTheme.typography.titleMedium.fontSize * dateFontScale,
                     fontWeight = FontWeight.Bold,
                     color    = primaryColor.copy(alpha = 0.45f),
                     modifier = Modifier.padding(start = 2.dp, bottom = 6.dp, end = 12.dp)
@@ -100,12 +111,14 @@ fun ClockScreen(viewModel: ClockViewModel = hiltViewModel()) {
                 Text(
                     text       = dateDay,
                     style      = MaterialTheme.typography.displaySmall,
+                    fontSize   = MaterialTheme.typography.displaySmall.fontSize * dateFontScale,
                     fontWeight = FontWeight.Bold,
                     color      = primaryColor.copy(alpha = 0.6f)
                 )
                 Text(
                     text     = "일",
                     style    = MaterialTheme.typography.titleMedium,
+                    fontSize = MaterialTheme.typography.titleMedium.fontSize * dateFontScale,
                     fontWeight = FontWeight.Bold,
                     color    = primaryColor.copy(alpha = 0.45f),
                     modifier = Modifier.padding(start = 2.dp, bottom = 6.dp)
@@ -117,9 +130,31 @@ fun ClockScreen(viewModel: ClockViewModel = hiltViewModel()) {
             Text(
                 text       = timeText,
                 style      = MaterialTheme.typography.displayLarge,
-                fontSize   = 100.sp,
+                fontSize   = 100.sp * timeFontScale,
                 fontWeight = FontWeight.Light,
                 color      = primaryColor
+            )
+        }
+
+        // ── 글자 크기 조절 (우측 상단) ──
+        Column(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(20.dp),
+            horizontalAlignment = Alignment.End,
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            FontScaleStepper(
+                label      = "월일크기",
+                tint       = primaryColor.copy(alpha = 0.6f),
+                onDecrease = viewModel::decreaseDateFontScale,
+                onIncrease = viewModel::increaseDateFontScale
+            )
+            FontScaleStepper(
+                label      = "시계크기",
+                tint       = primaryColor,
+                onDecrease = viewModel::decreaseTimeFontScale,
+                onIncrease = viewModel::increaseTimeFontScale
             )
         }
 
@@ -255,6 +290,51 @@ private fun ExternalAppDialog(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun FontScaleStepper(
+    label: String,
+    tint: Color,
+    onDecrease: () -> Unit,
+    onIncrease: () -> Unit,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Text(
+            text  = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = tint
+        )
+        FontScaleButton(icon = Icons.Default.Remove, tint = tint, onClick = onDecrease)
+        FontScaleButton(icon = Icons.Default.Add, tint = tint, onClick = onIncrease)
+    }
+}
+
+@Composable
+private fun FontScaleButton(
+    icon: ImageVector,
+    tint: Color,
+    onClick: () -> Unit,
+) {
+    ClickShrinkEffect(shrinkFactor = 0.85f, onClick = onClick) {
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .background(color = tint.copy(alpha = 0.15f), shape = CircleShape)
+                .border(width = 1.dp, color = tint.copy(alpha = 0.4f), shape = CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector        = icon,
+                contentDescription = null,
+                tint               = tint,
+                modifier           = Modifier.size(18.dp)
+            )
         }
     }
 }
