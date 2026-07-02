@@ -4,24 +4,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import example.yf.fruit_hall.data.NavigationPreferenceRepository
-import example.yf.fruit_hall.data.schedule.ScheduleRepository
-import kotlinx.coroutines.launch
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
 @HiltViewModel
 class AppViewModel @Inject constructor(
-    private val navPrefs: NavigationPreferenceRepository,
-    private val scheduleRepository: ScheduleRepository
+    private val navPrefs: NavigationPreferenceRepository
 ) : ViewModel() {
-
-    init {
-        syncSchedule()
-    }
 
     var isRailVisible by mutableStateOf(true)
         private set
@@ -46,16 +36,6 @@ class AppViewModel @Inject constructor(
 
     fun toggleRail() {
         isRailVisible = !isRailVisible
-    }
-
-    private fun syncSchedule() {
-        viewModelScope.launch {
-            val fmt = DateTimeFormatter.ofPattern("yyyyMM")
-            val today = LocalDate.now()
-            listOf(today, today.plusMonths(1), today.plusMonths(2)).forEach { date ->
-                runCatching { scheduleRepository.syncIfNeeded("s" + date.format(fmt)) }
-            }
-        }
     }
 
     fun onRouteSelected(route: MainRoute) {
