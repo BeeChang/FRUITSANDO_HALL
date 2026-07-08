@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Casino
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.PointOfSale
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.Icon
@@ -82,6 +83,13 @@ private val railItems = listOf(
         icon = Icons.Default.CalendarMonth,
         isSelected = { it?.hasRoute<MainRoute.Schedule>() ?: false },
     ),
+    RailItemData(
+        route = MainRoute.TraySplit,
+        labelRes = R.string.nav_tray_split,
+        cdRes = R.string.cd_nav_tray_split,
+        icon = Icons.Default.Inventory2,
+        isSelected = { it?.hasRoute<MainRoute.TraySplit>() ?: false },
+    ),
 )
 
 @Composable
@@ -98,6 +106,7 @@ fun AppNavigationRail(
         MainRoute.Position to Color(0xFFFF9BB5),  // 소프트 로즈핑크
         MainRoute.Clock    to Color(0xFFFFD580),  // 소프트 앰버
         MainRoute.Schedule to Color(0xFFCE93D8),  // 소프트 라벤더
+        MainRoute.TraySplit to Color(0xFFB5C99A), // 소프트 세이지그린
     )
     val routeTextColorMap = mapOf(
         MainRoute.Pos      to Color(0xFF1565A8),  // 진한 블루
@@ -106,6 +115,7 @@ fun AppNavigationRail(
         MainRoute.Position to Color(0xFFB02060),  // 진한 핑크
         MainRoute.Clock    to Color(0xFF8C6200),  // 진한 앰버
         MainRoute.Schedule to Color(0xFF6A3D9A),  // 진한 퍼플
+        MainRoute.TraySplit to Color(0xFF4A6B2A), // 진한 올리브그린
     )
 
     NavigationRail {

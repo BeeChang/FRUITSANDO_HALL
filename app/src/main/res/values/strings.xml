@@ -8,6 +8,7 @@
     <string name="nav_position">포지션</string>
     <string name="nav_clock">시계</string>
     <string name="nav_schedule">스케줄</string>
+    <string name="nav_tray_split">판나누기</string>
 
     <!-- Screen Titles -->
     <string name="screen_pos">비상용포스</string>
@@ -16,6 +17,7 @@
     <string name="screen_position">포지션</string>
     <string name="screen_clock">시계</string>
     <string name="screen_schedule">스케줄</string>
+    <string name="screen_tray_split">판나누기</string>
 
     <!-- Common -->
     <string name="ok">확인</string>
@@ -28,4 +30,5 @@
     <string name="cd_nav_position">랜덤 포지션 화면으로 이동</string>
     <string name="cd_nav_clock">시계 화면으로 이동</string>
     <string name="cd_nav_schedule">스케줄 화면으로 이동</string>
+    <string name="cd_nav_tray_split">판나누기 화면으로 이동</string>
 </resources>
