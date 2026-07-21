@@ -22,6 +22,8 @@
     <!-- Common -->
     <string name="ok">확인</string>
     <string name="cancel">취소</string>
+    <string name="add">추가</string>
+    <string name="save">저장</string>
 
     <!-- Content Descriptions -->
     <string name="cd_nav_pos">비상용 포스 화면으로 이동</string>
@@ -31,4 +33,182 @@
     <string name="cd_nav_clock">시계 화면으로 이동</string>
     <string name="cd_nav_schedule">스케줄 화면으로 이동</string>
     <string name="cd_nav_tray_split">판나누기 화면으로 이동</string>
+    <string name="cd_close">닫기</string>
+
+    <!-- Tray Split: Top/Bottom Bar -->
+    <string name="tray_total_count">총 %1$d판</string>
+    <string name="tray_overall_summary_check">총정리 확인</string>
+    <string name="tray_menu_help">설명서</string>
+    <string name="tray_add_space">공간 추가</string>
+    <string name="tray_allocation_settings">배분 설정</string>
+    <string name="tray_round_size_label">%1$d차 %2$d</string>
+    <string name="tray_empty_state_hint">우측 상단 + 로 공간을 추가하고 판을 등록해보세요</string>
+    <string name="tray_reset">초기화</string>
+    <string name="tray_reset_dialog_content">오늘 등록한 판이 모두 삭제됩니다. 공간과 품목은 유지됩니다. 계속할까요?</string>
+    <string name="tray_run_allocation">배분 실행</string>
+    <string name="tray_confirm">확정</string>
+    <string name="tray_candidate_fallback_label">대안 %1$d</string>
+    <string name="tray_overall_summary_title">차수별 총정리</string>
+    <string name="tray_pin_round_title">차수 고정</string>
+    <string name="tray_change_round_title">차수 변경</string>
+
+    <!-- Tray Split: Help Dialog -->
+    <string name="tray_help_dialog_title">판나누기 설명서</string>
+    <string name="tray_help_section_space">공간</string>
+    <string name="tray_help_section_item">품목</string>
+    <string name="tray_help_section_tray_register">판 등록</string>
+    <string name="tray_help_section_settings">배분 설정</string>
+    <string name="tray_help_section_run">배분 실행 · 후보 보기</string>
+    <string-array name="tray_help_lines_space">
+        <item>판을 올려두는 진열 위치입니다. 상단 \'공간 추가\'로 만들 수 있어요.</item>
+        <item>이름 옆 연필 아이콘으로 이름을 수정할 수 있어요.</item>
+        <item>별표(★)를 누르면 그 공간이 \'최종 판매 위치\'로 지정됩니다. 1차에 배정된 판이 이 위치가 아니면 배분 결과에 \'이동\' 표시가 붙어요.</item>
+    </string-array>
+    <string-array name="tray_help_lines_item">
+        <item>왼쪽(또는 상단) 품목 목록에서 + 로 물품 종류를 등록하세요.</item>
+        <item>품목 관리 화면에서 꾹 눌러 드래그하면 순서를 바꿀 수 있어요.</item>
+        <item>스위치를 끄면 \'오늘 미사용\'으로 표시되어, 품목 팔레트와 판 추가 화면에서 빠지고 배분 결과의 \'빠진 품목\' 확인 대상에서도 제외돼요. 재고 이슈로 오늘 안 나오는 품목에 사용하세요.</item>
+    </string-array>
+    <string-array name="tray_help_lines_tray_register">
+        <item>품목 칩을 판으로 드래그하면 바로 담깁니다.</item>
+        <item>공간의 \'판 추가\' 버튼으로 여러 품목을 한 번에 골라 새 판을 만들 수 있어요.</item>
+        <item>판을 꾹 누르면 특정 차수로 고정(pin)할 수 있어요 — 배분 결과가 이 판만은 항상 그 차수에 둡니다.</item>
+    </string-array>
+    <string-array name="tray_help_lines_settings">
+        <item>차수 수와 차수별 판 수를 정합니다. 차수마다 \'지정\'(정확한 판 수) 또는 \'비율\'(나머지를 자동 배분) 중 골라요.</item>
+        <item>표시할 후보 수, 1차 누락 허용 종류 수도 여기서 정할 수 있어요.</item>
+        <item>고급 설정은 분산/종류순서/수량/운반에 대한 민감도와 탐색 반복 횟수예요 — 잘 모르면 기본값(중)으로 두면 됩니다.</item>
+    </string-array>
+    <string-array name="tray_help_lines_run">
+        <item>\'배분 실행\'을 누르면 여러 후보를 계산해서 보여줘요.</item>
+        <item>\'추천안\'은 점수가 가장 높은 후보, \'운반 최소형\'은 이동이 가장 적은 후보예요. 둘이 같으면 하나로 합쳐 보여줘요.</item>
+        <item>후보를 탭하면 차수별 내용과 \'빠진 품목\'을 볼 수 있고, 우측 상단 아이콘으로 텍스트로도 볼 수 있어요.</item>
+        <item>\'이 후보 선택\'으로 반영한 뒤, 화면에서 직접 판을 다른 차수로 옮길 수도 있어요.</item>
+        <item>\'확정\'을 누르면 오늘 배분이 저장돼요.</item>
+    </string-array>
+
+    <!-- Tray Split: Add Space Dialog -->
+    <string name="tray_add_space_name_hint">공간 이름 (예: 냉장고 위)</string>
+
+    <!-- Tray Split: Add Tray Dialog -->
+    <string name="tray_add_tray_title">판 추가</string>
+    <string name="tray_add_tray_empty_type_hint">먼저 왼쪽 품목 관리에서 물품 종류를 등록해주세요</string>
+    <string name="tray_add_tray_tap_hint">탭하여 담기 · 비워두고 나중에 드래그로 채워도 됩니다</string>
+    <string name="tray_cd_selected">선택됨</string>
+
+    <!-- Tray Split: Allocation Result Dialog -->
+    <string name="tray_result_dialog_title">배분 결과</string>
+    <string name="tray_result_exploration_label">경우의 수 탐색 </string>
+    <string name="tray_result_exploration_count">%1$d회</string>
+    <string name="tray_result_candidates_hint">상위 후보 %1$d개 — 탭하면 차수별 내용을 볼 수 있어요</string>
+    <string name="tray_candidate_score_label">점수 %1$d</string>
+    <string name="tray_candidate_perfect">완벽</string>
+    <string name="tray_candidate_violation_label">위반 %1$d</string>
+    <string name="tray_candidate_round_size_label">%1$d차 %2$d판</string>
+    <string name="tray_candidate_move_label">운반 %1$d판</string>
+    <string name="tray_candidate_tap_hint">탭해서 차수별 내용 보기</string>
+
+    <!-- Tray Split: Round ordinal (shared) -->
+    <string name="tray_round_ordinal">%1$d차</string>
+
+    <!-- Tray Split: Allocation Settings Dialog -->
+    <string name="tray_settings_info_cd">설명 보기</string>
+    <string name="tray_level_low">하</string>
+    <string name="tray_level_mid">중</string>
+    <string name="tray_level_high">상</string>
+    <string name="tray_settings_primary_location_unset">미설정</string>
+    <string name="tray_settings_rounds_label">차수 수</string>
+    <string name="tray_settings_capacity_label">차수별 판 수</string>
+    <string name="tray_settings_capacity_hint">차수마다 \'지정\'(정확한 판 수) 또는 \'비율\'(나머지를 비중대로 자동 배분) 중 하나를 고르세요. 예: 1차만 지정 5판 + 2·3차는 비율 → 1차는 항상 5판, 나머지는 2·3차가 비중대로 나눠 가짐.</string>
+    <string name="tray_settings_capacity_fixed">지정</string>
+    <string name="tray_settings_capacity_flex">비율</string>
+    <string name="tray_settings_capacity_fixed_placeholder">판수</string>
+    <string name="tray_settings_capacity_flex_placeholder">비중</string>
+    <string name="tray_settings_flex_deviation_label">비율 차수 허용 편차(±판)</string>
+    <string name="tray_settings_missing_types_label">1차 누락 허용 종류 수</string>
+    <string name="tray_settings_top_n_label">표시할 후보 수</string>
+    <string name="tray_settings_primary_location_prefix">최종 판매 위치: %1$s</string>
+    <string name="tray_settings_primary_location_capacity_suffix"> (수용 %1$d판)</string>
+    <string name="tray_settings_primary_location_hint">메인 화면에서 공간 이름 옆 ★를 눌러 바꿀 수 있어요</string>
+    <string name="tray_settings_advanced_label">고급 설정</string>
+    <string name="tray_settings_spread_label">분산 선호 강도</string>
+    <string name="tray_settings_spread_desc">같은 종류의 물품이 여러 차수에 걸쳐 고르게 나타나도록 하는 정도예요. \'상\'으로 갈수록 한 차수에 몰아넣지 않고 여러 차수에 나눠 담으려는 경향이 강해져요.</string>
+    <string name="tray_settings_order_label">종류 순서 엄격도</string>
+    <string name="tray_settings_order_desc">차수가 진행될수록(1차→2차→3차…) 등장하는 물품 종류 수가 줄어드는 흐름을 얼마나 엄격히 지킬지예요. \'상\'일수록 뒤 차수에 새로운 종류가 섞이는 걸 강하게 피해요.</string>
+    <string name="tray_settings_move_label">운반 감점 강도</string>
+    <string name="tray_settings_move_desc">1차에 배정된 판이 최종 판매 위치가 아닌 곳에 있을 때 얼마나 꺼릴지예요. \'상\'일수록 운반이 적은 배치를 더 적극적으로 찾아요. 최종 판매 위치를 지정하지 않으면 이 항목은 적용되지 않아요.</string>
+    <string name="tray_settings_ils_label">탐색 반복 횟수</string>
+    <string name="tray_settings_ils_desc">배분 후보를 얼마나 여러 번 흔들어서 다양하게 찾아볼지예요. 기본값 6이면 충분해요. 판이 아주 많거나 후보가 비슷하게만 나온다면 늘려보고, 배분이 오래 걸리면 줄여보세요.</string>
+
+    <!-- Tray Split: Candidate Labels -->
+    <string name="tray_candidate_label_best_and_min_move">추천안 · 운반 최소</string>
+    <string name="tray_candidate_label_best">추천안</string>
+    <string name="tray_candidate_label_min_move">운반 최소형</string>
+
+    <!-- Tray Split: Rename Space Dialog -->
+    <string name="tray_rename_space_title">공간 편집</string>
+    <string name="tray_rename_space_name_label">공간 이름</string>
+    <string name="tray_rename_space_capacity_label">수용 가능 판 수</string>
+    <string name="tray_rename_space_capacity_placeholder">제한 없음</string>
+    <string name="tray_rename_space_capacity_hint">이 공간이 최종 판매 위치로 지정됐을 때, 실제로 놓을 수 있는 최대 판 수예요. 비워두면 제한을 두지 않아요.</string>
+
+    <!-- Tray Split: Round Choice Sheet -->
+    <string name="tray_round_choice_clear">고정 해제</string>
+
+    <!-- Tray Split: Round Summary Dialog -->
+    <string name="tray_summary_view_result">결과보기</string>
+    <string name="tray_summary_missing_items_label">1차에 빠진 품목</string>
+    <string name="tray_summary_tray_count_qty">%1$d판 · 약 %2$d개</string>
+    <string name="tray_summary_no_trays">배정된 판이 없습니다</string>
+    <string name="tray_summary_all_items_label">전체 품목</string>
+    <string name="tray_summary_tray_layout_label">판별 배치 (%1$d판)</string>
+    <string name="tray_summary_tray_index_label">판 %1$d</string>
+    <string name="tray_summary_move_needed">이동</string>
+    <string name="tray_summary_empty_tray">비어있음</string>
+    <string name="tray_summary_violations_label">위반 사항</string>
+    <string name="tray_summary_select_candidate">이 후보 선택</string>
+
+    <!-- Tray Split: Snack Chip Palette -->
+    <string name="tray_palette_item_label">품목</string>
+    <string name="tray_palette_manage">추가 및 수정</string>
+    <string name="tray_palette_drag_hint">드래그해서 판에 담기</string>
+    <string name="tray_palette_empty_hint">+ 로 물품 종류를 등록하세요</string>
+
+    <!-- Tray Split: Snack Type Manage Dialog -->
+    <string name="tray_manage_title">품목 관리</string>
+    <string name="tray_manage_empty_hint">품목을 추가해보세요</string>
+    <string name="tray_manage_reorder_hint">꾹 눌러 순서 변경 · 스위치로 오늘 사용 여부 설정</string>
+    <string name="tray_manage_add_new_label">새 품목 추가</string>
+    <string name="tray_manage_name_placeholder">품목명 (예: 산도)</string>
+    <string name="tray_manage_color1_label">색상 1</string>
+    <string name="tray_manage_mix_label">반반 섞기</string>
+    <string name="tray_manage_color2_label">색상 2</string>
+    <string name="tray_cd_delete">삭제</string>
+
+    <!-- Tray Split: Space Column -->
+    <string name="tray_cd_edit_name">이름 수정</string>
+    <string name="tray_cd_primary_location">최종 판매 위치</string>
+    <string name="tray_cd_set_primary_location">최종 판매 위치로 지정</string>
+    <string name="tray_space_tray_count">%1$d판</string>
+    <string name="tray_cd_add_tray_dialog">품목 담아서 판 추가</string>
+    <string name="tray_cd_quick_add_tray">판 바로 추가</string>
+    <string name="tray_cd_delete_space">공간 삭제</string>
+    <string name="tray_space_empty_hint">+ 로 판을 바로 추가하세요</string>
+
+    <!-- Tray Split: Text Summary Dialog -->
+    <string name="tray_text_summary_hint">다른 채널에 옮겨 적을 때 참고하세요</string>
+    <string name="tray_text_summary_no_items">배정된 품목 없음</string>
+
+    <!-- Tray Split: Tray Card -->
+    <string name="tray_card_cd_pinned">고정됨</string>
+    <string name="tray_card_pinned_round_label">%1$d차 고정</string>
+    <string name="tray_card_cd_needs_move">이동 필요</string>
+    <string name="tray_card_cd_delete">판 삭제</string>
+    <string name="tray_card_empty_hint">품목을 드래그해서 담으세요</string>
+    <string name="tray_card_cd_remove_item">제거</string>
+
+    <!-- Tray Split: ViewModel Snackbar Messages -->
+    <string name="tray_snackbar_settings_error">배분 설정을 확인해주세요: %1$s</string>
+    <string name="tray_snackbar_reset_done">초기화되었습니다</string>
+    <string name="tray_snackbar_save_done">저장되었습니다</string>
 </resources>
