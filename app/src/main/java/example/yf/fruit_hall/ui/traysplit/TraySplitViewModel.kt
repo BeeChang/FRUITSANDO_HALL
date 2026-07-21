@@ -164,7 +164,12 @@ class TraySplitViewModel @Inject constructor(
 
     private fun deleteSpace(id: Long) {
         val space = cachedSpaces.find { it.id == id } ?: return
-        viewModelScope.launch { repository.deleteSpace(space) }
+        viewModelScope.launch {
+            repository.deleteSpace(space)
+            if (cachedSettings.primaryLocationSpaceId == id) {
+                repository.updateSettings(cachedSettings.copy(primaryLocationSpaceId = null))
+            }
+        }
     }
 
     private fun renameSpace(id: Long, name: String, capacity: Int?) {
