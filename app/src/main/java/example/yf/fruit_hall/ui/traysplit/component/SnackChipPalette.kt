@@ -1,5 +1,6 @@
 package example.yf.fruit_hall.ui.traysplit.component
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,10 +17,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Icecream
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -36,8 +35,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import example.yf.fruit_hall.R
+import example.yf.fruit_hall.ui.component.util.ClickShrinkEffect
 import example.yf.fruit_hall.ui.theme.AppTheme
 import example.yf.fruit_hall.ui.traysplit.SnackTypeUi
 
@@ -58,18 +60,30 @@ fun SnackChipPalette(
             Icon(imageVector = Icons.Default.Icecream, contentDescription = null, tint = appColors.grey600, modifier = Modifier.size(16.dp))
             Spacer(Modifier.width(5.dp))
             Text(
-                text = "품목",
+                text = stringResource(R.string.tray_palette_item_label),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.weight(1f)
             )
-            IconButton(onClick = onManageClick, modifier = Modifier.size(26.dp)) {
-                Icon(Icons.Default.Add, contentDescription = "품목 관리", tint = appColors.primary500)
+            ClickShrinkEffect(onClick = onManageClick, shrinkFactor = 0.93f) {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(appColors.primary100)
+                        .padding(horizontal = 10.dp, vertical = 6.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.tray_palette_manage),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = appColors.primary700
+                    )
+                }
             }
         }
         Text(
-            text = "드래그해서 판에 담기",
+            text = stringResource(R.string.tray_palette_drag_hint),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f)
         )
@@ -77,7 +91,7 @@ fun SnackChipPalette(
 
         if (snackTypes.isEmpty()) {
             Text(
-                text = "+ 로 과자 종류를 등록하세요",
+                text = stringResource(R.string.tray_palette_empty_hint),
                 style = MaterialTheme.typography.bodySmall,
                 color = appColors.grey400
             )

@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material3.Card
@@ -36,8 +37,10 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import example.yf.fruit_hall.R
 import example.yf.fruit_hall.ui.theme.AppTheme
 import example.yf.fruit_hall.ui.traysplit.TrayUi
 
@@ -47,6 +50,7 @@ fun TrayCard(
     tray: TrayUi,
     assignedRound: Int?,
     isHighlighted: Boolean,
+    needsMove: Boolean = false,
     onBoundsChanged: (Rect) -> Unit,
     onCycleItemSize: (snackTypeId: Long) -> Unit,
     onRemoveItem: (snackTypeId: Long) -> Unit,
@@ -86,13 +90,13 @@ fun TrayCard(
                     ) {
                         Icon(
                             imageVector = Icons.Default.PushPin,
-                            contentDescription = "고정됨",
+                            contentDescription = stringResource(R.string.tray_card_cd_pinned),
                             tint = appColors.crimson500,
                             modifier = Modifier.size(12.dp)
                         )
                         Spacer(Modifier.width(3.dp))
                         Text(
-                            text = "${tray.pinnedRound}차 고정",
+                            text = stringResource(R.string.tray_card_pinned_round_label, tray.pinnedRound),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
                             color = appColors.crimson500
@@ -109,7 +113,7 @@ fun TrayCard(
                             .padding(horizontal = 14.dp, vertical = 7.dp)
                     ) {
                         Text(
-                            text = "${assignedRound}차",
+                            text = stringResource(R.string.tray_round_ordinal, assignedRound),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.ExtraBold,
                             color = roundText
@@ -118,19 +122,52 @@ fun TrayCard(
                     Spacer(Modifier.width(6.dp))
                 }
                 if (tray.pinnedRound == null) {
-                    Icon(
-                        imageVector = Icons.Outlined.PushPin,
-                        contentDescription = "차수 고정",
-                        tint = appColors.grey400,
+                    Row(
+                        modifier = Modifier.clickable { onLongPressPin() },
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.PushPin,
+                            contentDescription = stringResource(R.string.tray_pin_round_title),
+                            tint = appColors.grey400,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(Modifier.width(3.dp))
+                        Text(
+                            text = stringResource(R.string.tray_pin_round_title),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = appColors.grey400
+                        )
+                    }
+                }
+                if (needsMove) {
+                    Spacer(Modifier.width(6.dp))
+                    Row(
                         modifier = Modifier
-                            .size(18.dp)
-                            .clickable { onLongPressPin() }
-                    )
+                            .clip(RoundedCornerShape(50))
+                            .background(appColors.warning500.copy(alpha = 0.2f))
+                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.LocalShipping,
+                            contentDescription = stringResource(R.string.tray_card_cd_needs_move),
+                            tint = appColors.warning500,
+                            modifier = Modifier.size(12.dp)
+                        )
+                        Spacer(Modifier.width(3.dp))
+                        Text(
+                            text = stringResource(R.string.tray_summary_move_needed),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = appColors.warning500
+                        )
+                    }
                 }
                 Spacer(modifier = Modifier.weight(1f))
                 Icon(
                     imageVector = Icons.Default.Close,
-                    contentDescription = "판 삭제",
+                    contentDescription = stringResource(R.string.tray_card_cd_delete),
                     tint = appColors.grey400,
                     modifier = Modifier
                         .size(16.dp)
@@ -142,7 +179,7 @@ fun TrayCard(
 
             if (tray.items.isEmpty()) {
                 Text(
-                    text = "품목을 드래그해서 담으세요",
+                    text = stringResource(R.string.tray_card_empty_hint),
                     style = MaterialTheme.typography.labelSmall,
                     color = appColors.grey400
                 )
@@ -166,7 +203,7 @@ fun TrayCard(
                             Spacer(Modifier.width(4.dp))
                             Icon(
                                 imageVector = Icons.Default.Close,
-                                contentDescription = "제거",
+                                contentDescription = stringResource(R.string.tray_card_cd_remove_item),
                                 tint = Color(0xFF2D2D2D).copy(alpha = 0.4f),
                                 modifier = Modifier
                                     .size(14.dp)

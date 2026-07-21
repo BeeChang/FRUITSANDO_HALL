@@ -61,17 +61,19 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.zIndex
+import example.yf.fruit_hall.R
 import example.yf.fruit_hall.ui.theme.AppTheme
 import example.yf.fruit_hall.ui.traysplit.SnackTypeUi
 import kotlin.math.roundToInt
 
-// 과자 칩용 파스텔 팔레트
+// 물품 칩용 파스텔 팔레트
 val snackColorPalette = listOf(
     "#FFB3C6", "#FFD6A5", "#FFEAA7", "#B5EAD7",
     "#A8E6CF", "#B3D9FF", "#A8D0F8", "#D4B8F5",
@@ -112,6 +114,7 @@ fun SnackTypeManageDialog(
     onAdd: (name: String, colorHex: String, secondaryColorHex: String?) -> Unit,
     onDelete: (Long) -> Unit,
     onReorder: (List<Long>) -> Unit,
+    onToggleActive: (id: Long, isActive: Boolean) -> Unit,
     onDismiss: () -> Unit
 ) {
     val appColors = AppTheme.colors
@@ -156,7 +159,7 @@ fun SnackTypeManageDialog(
                     )
                     Spacer(Modifier.width(10.dp))
                     Text(
-                        text = "품목 관리",
+                        text = stringResource(R.string.tray_manage_title),
                         style = MaterialTheme.typography.titleMedium,
                         color = appColors.white,
                         modifier = Modifier.weight(1f)
@@ -164,7 +167,7 @@ fun SnackTypeManageDialog(
                     IconButton(onClick = onDismiss) {
                         Icon(
                             imageVector = Icons.Default.Close,
-                            contentDescription = "닫기",
+                            contentDescription = stringResource(R.string.cd_close),
                             tint = appColors.grey300,
                             modifier = Modifier.size(18.dp)
                         )
@@ -178,14 +181,14 @@ fun SnackTypeManageDialog(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = "품목을 추가해보세요",
+                                text = stringResource(R.string.tray_manage_empty_hint),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = appColors.grey400
                             )
                         }
                     } else {
                         Text(
-                            text = "꾹 눌러 순서 변경",
+                            text = stringResource(R.string.tray_manage_reorder_hint),
                             style = MaterialTheme.typography.labelSmall,
                             color = appColors.grey400
                         )
@@ -205,6 +208,7 @@ fun SnackTypeManageDialog(
                                             type = type,
                                             isPlaceholder = draggingId == type.id,
                                             onDelete = { onDelete(type.id) },
+                                            onToggleActive = { onToggleActive(type.id, it) },
                                             onItemStepMeasured = { step -> if (session.itemStepPx <= 0f) session.itemStepPx = step },
                                             onDragStart = { touchWindowY, halfHeight ->
                                                 session.startIndex = localSnackTypes.indexOfFirst { it.id == type.id }
@@ -262,7 +266,7 @@ fun SnackTypeManageDialog(
                     Spacer(Modifier.height(16.dp))
 
                     Text(
-                        text = "새 품목 추가",
+                        text = stringResource(R.string.tray_manage_add_new_label),
                         style = MaterialTheme.typography.labelLarge,
                         color = appColors.grey700,
                         fontWeight = FontWeight.SemiBold
@@ -272,7 +276,7 @@ fun SnackTypeManageDialog(
                     OutlinedTextField(
                         value = newName,
                         onValueChange = { newName = it },
-                        label = { Text("품목명 (예: 산도)") },
+                        label = { Text(stringResource(R.string.tray_manage_name_placeholder)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         shape = RoundedCornerShape(12.dp),
@@ -291,7 +295,7 @@ fun SnackTypeManageDialog(
                     )
 
                     Spacer(Modifier.height(14.dp))
-                    Text(text = "색상 1", style = MaterialTheme.typography.labelSmall, color = appColors.grey500)
+                    Text(text = stringResource(R.string.tray_manage_color1_label), style = MaterialTheme.typography.labelSmall, color = appColors.grey500)
                     Spacer(Modifier.height(8.dp))
 
                     ColorSwatchGrid(selected = selectedColor, onSelect = { selectedColor = it })
@@ -299,7 +303,7 @@ fun SnackTypeManageDialog(
                     Spacer(Modifier.height(14.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            text = "반반 섞기",
+                            text = stringResource(R.string.tray_manage_mix_label),
                             style = MaterialTheme.typography.labelMedium,
                             color = appColors.grey600,
                             modifier = Modifier.weight(1f)
@@ -309,7 +313,7 @@ fun SnackTypeManageDialog(
 
                     if (mixEnabled) {
                         Spacer(Modifier.height(10.dp))
-                        Text(text = "색상 2", style = MaterialTheme.typography.labelSmall, color = appColors.grey500)
+                        Text(text = stringResource(R.string.tray_manage_color2_label), style = MaterialTheme.typography.labelSmall, color = appColors.grey500)
                         Spacer(Modifier.height(8.dp))
                         ColorSwatchGrid(selected = selectedSecondaryColor, onSelect = { selectedSecondaryColor = it })
                     }
@@ -318,7 +322,7 @@ fun SnackTypeManageDialog(
 
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         TextButton(onClick = onDismiss, modifier = Modifier.weight(1f)) {
-                            Text("닫기", color = appColors.grey600)
+                            Text(stringResource(R.string.cd_close), color = appColors.grey600)
                         }
                         Button(
                             onClick = {
@@ -333,7 +337,7 @@ fun SnackTypeManageDialog(
                         ) {
                             Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(Modifier.width(4.dp))
-                            Text("추가")
+                            Text(stringResource(R.string.add))
                         }
                     }
                 }
@@ -381,6 +385,7 @@ private fun SnackTypeRow(
     type: SnackTypeUi,
     isPlaceholder: Boolean,
     onDelete: () -> Unit,
+    onToggleActive: (Boolean) -> Unit,
     onItemStepMeasured: (stepPx: Float) -> Unit,
     onDragStart: (touchWindowY: Float, itemHalfHeight: Float) -> Unit,
     onDrag: (deltaY: Float) -> Unit,
@@ -437,13 +442,20 @@ private fun SnackTypeRow(
             text = type.name,
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.weight(1f),
-            color = Color(DARK_TEXT).copy(alpha = if (isPlaceholder) 0.25f else 1f),
+            color = Color(DARK_TEXT).copy(alpha = if (isPlaceholder) 0.25f else if (type.isActive) 1f else 0.4f),
             fontWeight = FontWeight.Medium
         )
+        Switch(
+            checked = type.isActive,
+            onCheckedChange = onToggleActive,
+            enabled = !isPlaceholder,
+            modifier = Modifier.height(28.dp)
+        )
+        Spacer(Modifier.width(4.dp))
         IconButton(onClick = onDelete, enabled = !isPlaceholder, modifier = Modifier.size(34.dp)) {
             Icon(
                 imageVector = Icons.Default.Delete,
-                contentDescription = "삭제",
+                contentDescription = stringResource(R.string.tray_cd_delete),
                 tint = appColors.crimson400.copy(alpha = if (isPlaceholder) 0.1f else 0.6f),
                 modifier = Modifier.size(17.dp)
             )
