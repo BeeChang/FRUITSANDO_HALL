@@ -26,7 +26,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DragIndicator
 import androidx.compose.material.icons.filled.Icecream
@@ -144,35 +143,11 @@ fun SnackTypeManageDialog(
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
             Column {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(appColors.grey900)
-                        .padding(start = 20.dp, end = 8.dp, top = 14.dp, bottom = 14.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Icecream,
-                        contentDescription = null,
-                        tint = appColors.white,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(Modifier.width(10.dp))
-                    Text(
-                        text = stringResource(R.string.tray_manage_title),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = appColors.white,
-                        modifier = Modifier.weight(1f)
-                    )
-                    IconButton(onClick = onDismiss) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = stringResource(R.string.cd_close),
-                            tint = appColors.grey300,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                }
+                TraySplitDialogHeader(
+                    title = stringResource(R.string.tray_manage_title),
+                    onDismiss = onDismiss,
+                    icon = Icons.Default.Icecream
+                )
 
                 Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)) {
                     if (localSnackTypes.isEmpty()) {

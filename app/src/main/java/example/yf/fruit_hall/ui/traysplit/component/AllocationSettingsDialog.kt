@@ -20,7 +20,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Star
@@ -55,6 +54,7 @@ import example.yf.fruit_hall.core.Level
 import example.yf.fruit_hall.core.RoundCapacity
 import example.yf.fruit_hall.ui.component.AppOnlyConfirmDialog
 import example.yf.fruit_hall.ui.component.util.ClickShrinkEffect
+import example.yf.fruit_hall.ui.component.util.toTrimmedDecimalString
 import example.yf.fruit_hall.ui.theme.AppTheme
 import example.yf.fruit_hall.ui.traysplit.AllocationSettingsUi
 import example.yf.fruit_hall.ui.traysplit.SpaceUi
@@ -63,13 +63,7 @@ private data class CapacityRowState(val isFixed: Boolean, val fixedText: String,
 
 private fun RoundCapacity.toRowState(): CapacityRowState = when (this) {
     is RoundCapacity.Fixed -> CapacityRowState(true, trays.toString(), "1.0")
-    is RoundCapacity.Flexible -> CapacityRowState(false, "", formatWeight(weight))
-}
-
-/** 1.0 같은 무한소수를 짧게 표시 */
-private fun formatWeight(value: Double): String {
-    val rounded = kotlin.math.round(value * 10) / 10.0
-    return if (rounded == rounded.toLong().toDouble()) rounded.toLong().toString() else rounded.toString()
+    is RoundCapacity.Flexible -> CapacityRowState(false, "", weight.toTrimmedDecimalString())
 }
 
 @Composable
@@ -174,18 +168,11 @@ fun AllocationSettingsDialog(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background)
         ) {
             Column {
-                Row(
-                    modifier = Modifier.fillMaxWidth().background(appColors.grey900)
-                        .padding(start = 20.dp, end = 8.dp, top = 14.dp, bottom = 14.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(Icons.Default.Tune, contentDescription = null, tint = appColors.white)
-                    Spacer(Modifier.width(10.dp))
-                    Text(stringResource(R.string.tray_allocation_settings), style = MaterialTheme.typography.titleMedium, color = appColors.white, modifier = Modifier.weight(1f))
-                    IconButton(onClick = onDismiss) {
-                        Icon(Icons.Default.Close, contentDescription = stringResource(R.string.cd_close), tint = appColors.grey300, modifier = Modifier.size(18.dp))
-                    }
-                }
+                TraySplitDialogHeader(
+                    title = stringResource(R.string.tray_allocation_settings),
+                    onDismiss = onDismiss,
+                    icon = Icons.Default.Tune
+                )
 
                 Column(
                     modifier = Modifier
