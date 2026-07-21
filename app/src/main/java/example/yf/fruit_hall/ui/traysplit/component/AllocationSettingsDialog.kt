@@ -2,7 +2,6 @@ package example.yf.fruit_hall.ui.traysplit.component
 
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,6 +23,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Button
@@ -44,18 +44,30 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import example.yf.fruit_hall.R
 import example.yf.fruit_hall.core.Level
+import example.yf.fruit_hall.core.RoundCapacity
 import example.yf.fruit_hall.ui.component.AppOnlyConfirmDialog
+import example.yf.fruit_hall.ui.component.util.ClickShrinkEffect
 import example.yf.fruit_hall.ui.theme.AppTheme
 import example.yf.fruit_hall.ui.traysplit.AllocationSettingsUi
+import example.yf.fruit_hall.ui.traysplit.SpaceUi
 
-/** 100.0/3 같은 무한소수를 33.3처럼 짧게 — 입력칸이 끝없이 길어지는 것 방지 */
-private fun formatPercent(value: Double): String {
+private data class CapacityRowState(val isFixed: Boolean, val fixedText: String, val flexText: String)
+
+private fun RoundCapacity.toRowState(): CapacityRowState = when (this) {
+    is RoundCapacity.Fixed -> CapacityRowState(true, trays.toString(), "1.0")
+    is RoundCapacity.Flexible -> CapacityRowState(false, "", formatWeight(weight))
+}
+
+/** 1.0 같은 무한소수를 짧게 표시 */
+private fun formatWeight(value: Double): String {
     val rounded = kotlin.math.round(value * 10) / 10.0
     return if (rounded == rounded.toLong().toDouble()) rounded.toLong().toString() else rounded.toString()
 }
@@ -67,17 +79,19 @@ private fun InfoLabel(label: String, description: String) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(label, style = MaterialTheme.typography.labelMedium, color = appColors.grey600)
         Spacer(Modifier.width(4.dp))
-        Icon(
-            imageVector = Icons.Outlined.Info,
-            contentDescription = "설명 보기",
-            tint = appColors.grey400,
-            modifier = Modifier.size(14.dp).clickable { showInfo = true }
-        )
+        ClickShrinkEffect(onClick = { showInfo = true }, shrinkFactor = 0.8f) {
+            Icon(
+                imageVector = Icons.Outlined.Info,
+                contentDescription = stringResource(R.string.tray_settings_info_cd),
+                tint = appColors.grey400,
+                modifier = Modifier.size(14.dp)
+            )
+        }
     }
     AppOnlyConfirmDialog(
         title = label,
         content = description,
-        confirmButtonText = "확인",
+        confirmButtonText = stringResource(R.string.ok),
         isShowDialog = showInfo,
         onConfirm = { showInfo = false },
         onDismiss = { showInfo = false }
@@ -91,22 +105,27 @@ private fun LevelPicker(label: String, description: String, selected: Level, onS
         InfoLabel(label, description)
         Spacer(Modifier.height(6.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf(Level.LOW to "하", Level.MID to "중", Level.HIGH to "상").forEach { (level, text) ->
+            listOf(
+                Level.LOW to stringResource(R.string.tray_level_low),
+                Level.MID to stringResource(R.string.tray_level_mid),
+                Level.HIGH to stringResource(R.string.tray_level_high)
+            ).forEach { (level, text) ->
                 val isSelected = selected == level
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(if (isSelected) appColors.primary500 else MaterialTheme.colorScheme.surfaceVariant)
-                        .clickable { onSelect(level) }
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = text,
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = if (isSelected) appColors.white else MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                ClickShrinkEffect(onClick = { onSelect(level) }, shrinkFactor = 0.93f) {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(if (isSelected) appColors.primary500 else MaterialTheme.colorScheme.surfaceVariant)
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = text,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isSelected) appColors.white else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
         }
@@ -117,29 +136,35 @@ private fun LevelPicker(label: String, description: String, selected: Level, onS
 @Composable
 fun AllocationSettingsDialog(
     settings: AllocationSettingsUi,
+    spaces: List<SpaceUi>,
     onConfirm: (AllocationSettingsUi) -> Unit,
     onDismiss: () -> Unit
 ) {
     val appColors = AppTheme.colors
     var rounds by remember { mutableStateOf(settings.rounds) }
-    var isExactMode by remember { mutableStateOf(settings.isExactMode) }
-    var exactValues by remember {
-        mutableStateOf(List(rounds) { i -> settings.exactTraysPerRound.getOrNull(i)?.toString() ?: "" })
+    var capacityRows by remember {
+        mutableStateOf(settings.capacity.map { it.toRowState() })
     }
-    var ratioValues by remember {
-        mutableStateOf(List(rounds) { i -> settings.ratioPercents.getOrNull(i)?.let { formatPercent(it) } ?: formatPercent(100.0 / rounds) })
-    }
-    var maxDeviation by remember { mutableStateOf(settings.maxDeviation) }
+    var flexDeviation by remember { mutableStateOf(settings.flexDeviation) }
     var allowedMissingTypes by remember { mutableStateOf(settings.allowedMissingTypes) }
+    var topNText by remember { mutableStateOf(settings.topN.toString()) }
     var showAdvanced by remember { mutableStateOf(false) }
     var spreadStrength by remember { mutableStateOf(settings.spreadStrength) }
     var orderStrictness by remember { mutableStateOf(settings.orderStrictness) }
-    var qtySensitivity by remember { mutableStateOf(settings.qtySensitivity) }
+    var moveAversion by remember { mutableStateOf(settings.moveAversion) }
+    var ilsIterationsText by remember { mutableStateOf(settings.ilsIterations.toString()) }
+
+    val anyFlexible = capacityRows.any { !it.isFixed }
+    val capacityValid = capacityRows.all { row ->
+        if (row.isFixed) row.fixedText.toIntOrNull()?.let { it >= 0 } == true
+        else row.flexText.toDoubleOrNull()?.let { it >= 0 } == true
+    }
+    val primaryLocationSpace = spaces.find { it.id == settings.primaryLocationSpaceId }
+    val primaryLocationName = primaryLocationSpace?.name ?: stringResource(R.string.tray_settings_primary_location_unset)
 
     fun resizeToRounds(newRounds: Int) {
         rounds = newRounds.coerceIn(2, 8)
-        exactValues = List(rounds) { i -> exactValues.getOrNull(i) ?: "" }
-        ratioValues = List(rounds) { i -> ratioValues.getOrNull(i) ?: formatPercent(100.0 / rounds) }
+        capacityRows = List(rounds) { i -> capacityRows.getOrNull(i) ?: CapacityRowState(false, "", "1.0") }
     }
 
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
@@ -156,178 +181,227 @@ fun AllocationSettingsDialog(
                 ) {
                     Icon(Icons.Default.Tune, contentDescription = null, tint = appColors.white)
                     Spacer(Modifier.width(10.dp))
-                    Text("배분 설정", style = MaterialTheme.typography.titleMedium, color = appColors.white, modifier = Modifier.weight(1f))
+                    Text(stringResource(R.string.tray_allocation_settings), style = MaterialTheme.typography.titleMedium, color = appColors.white, modifier = Modifier.weight(1f))
                     IconButton(onClick = onDismiss) {
-                        Icon(Icons.Default.Close, contentDescription = "닫기", tint = appColors.grey300, modifier = Modifier.size(18.dp))
+                        Icon(Icons.Default.Close, contentDescription = stringResource(R.string.cd_close), tint = appColors.grey300, modifier = Modifier.size(18.dp))
                     }
                 }
 
                 Column(
                     modifier = Modifier
-                        .heightIn(max = 480.dp)
+                        .heightIn(max = 520.dp)
                         .verticalScroll(rememberScrollState())
                         .padding(20.dp)
                 ) {
-                    Text("차수 수", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = appColors.grey700)
+                    Text(stringResource(R.string.tray_settings_rounds_label), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = appColors.grey700)
                     Spacer(Modifier.height(8.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         IconButton(onClick = { resizeToRounds(rounds - 1) }) { Text("–", style = MaterialTheme.typography.titleLarge) }
-                        Text("${rounds}차", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.tray_round_ordinal, rounds), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                         IconButton(onClick = { resizeToRounds(rounds + 1) }) { Text("+", style = MaterialTheme.typography.titleLarge) }
                     }
 
                     Spacer(Modifier.height(16.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        listOf(false to "비율(%)", true to "지정(판 수)").forEach { (exact, label) ->
-                            val isSelected = isExactMode == exact
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(10.dp))
-                                    .background(if (isSelected) appColors.primary500 else MaterialTheme.colorScheme.surfaceVariant)
-                                    .clickable { isExactMode = exact }
-                                    .padding(horizontal = 16.dp, vertical = 10.dp)
-                            ) {
-                                Text(label, color = if (isSelected) appColors.white else MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold)
-                            }
-                        }
-                    }
-                    Spacer(Modifier.height(6.dp))
+                    Text(stringResource(R.string.tray_settings_capacity_label), style = MaterialTheme.typography.labelMedium, color = appColors.grey600)
+                    Spacer(Modifier.height(4.dp))
                     Text(
-                        text = "정확한 판 수를 안 정해도 된다면 '비율(%)'을 쓰세요 — 대략적인 비율만 정하면 자동으로 배분돼요.",
+                        text = stringResource(R.string.tray_settings_capacity_hint),
                         style = MaterialTheme.typography.labelSmall,
                         color = appColors.grey500
                     )
-
-                    Spacer(Modifier.height(16.dp))
-                    if (isExactMode) {
-                        val blankCount = exactValues.count { it.isBlank() }
-                        Text("차수별 판 수", style = MaterialTheme.typography.labelMedium, color = appColors.grey600)
-                        Spacer(Modifier.height(4.dp))
-                        Text(
-                            text = "빈 칸은 딱 1개까지만 가능해요 — 그 차수가 나머지 판을 전부 가져가요. " +
-                                "예: 1차=5, 2차=빈칸이면 나머지 전부가 2차로 가요. 3차까지 있는데 2차·3차를 둘 다 비우면 안 돼요.",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = appColors.grey500
-                        )
-                        Spacer(Modifier.height(8.dp))
-                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            exactValues.forEachIndexed { i, v ->
+                    Spacer(Modifier.height(8.dp))
+                    val capacityFixedLabel = stringResource(R.string.tray_settings_capacity_fixed)
+                    val capacityFlexLabel = stringResource(R.string.tray_settings_capacity_flex)
+                    capacityRows.forEachIndexed { i, row ->
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 4.dp)) {
+                            Text(stringResource(R.string.tray_round_ordinal, i + 1), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, modifier = Modifier.width(36.dp))
+                            Spacer(Modifier.width(8.dp))
+                            listOf(true to capacityFixedLabel, false to capacityFlexLabel).forEach { (isFixed, label) ->
+                                val isSelected = row.isFixed == isFixed
+                                ClickShrinkEffect(
+                                    onClick = {
+                                        capacityRows = capacityRows.toMutableList().also {
+                                            it[i] = row.copy(isFixed = isFixed)
+                                        }
+                                    },
+                                    shrinkFactor = 0.9f
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(if (isSelected) appColors.primary500 else MaterialTheme.colorScheme.surfaceVariant)
+                                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                                    ) {
+                                        Text(label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold,
+                                            color = if (isSelected) appColors.white else MaterialTheme.colorScheme.onSurfaceVariant)
+                                    }
+                                }
+                                Spacer(Modifier.width(6.dp))
+                            }
+                            Spacer(Modifier.width(4.dp))
+                            if (row.isFixed) {
                                 OutlinedTextField(
-                                    value = v,
-                                    onValueChange = { new -> exactValues = exactValues.toMutableList().also { it[i] = new.filter(Char::isDigit) } },
-                                    label = { Text("${i + 1}차") },
-                                    placeholder = { Text("나머지") },
-                                    modifier = Modifier.width(100.dp),
+                                    value = row.fixedText,
+                                    onValueChange = { new ->
+                                        capacityRows = capacityRows.toMutableList().also {
+                                            it[i] = row.copy(fixedText = new.filter(Char::isDigit))
+                                        }
+                                    },
+                                    placeholder = { Text(stringResource(R.string.tray_settings_capacity_fixed_placeholder)) },
+                                    modifier = Modifier.width(90.dp),
                                     singleLine = true,
                                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                                 )
-                            }
-                        }
-                        if (blankCount > 1) {
-                            Spacer(Modifier.height(6.dp))
-                            Text(
-                                text = "빈 칸이 ${blankCount}개예요. 1개만 남기고 나머지 차수엔 판 수를 입력해주세요.",
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = appColors.crimson400
-                            )
-                        }
-                    } else {
-                        Text("차수별 목표 비율 (%, 합은 자동 정규화)", style = MaterialTheme.typography.labelMedium, color = appColors.grey600)
-                        Spacer(Modifier.height(8.dp))
-                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            ratioValues.forEachIndexed { i, v ->
+                            } else {
                                 OutlinedTextField(
-                                    value = v,
+                                    value = row.flexText,
                                     onValueChange = { new ->
                                         val filtered = new.filter { c -> c.isDigit() || c == '.' }.take(5)
-                                        ratioValues = ratioValues.toMutableList().also { it[i] = filtered }
+                                        capacityRows = capacityRows.toMutableList().also {
+                                            it[i] = row.copy(flexText = filtered)
+                                        }
                                     },
-                                    label = { Text("${i + 1}차 %") },
-                                    modifier = Modifier.width(100.dp),
+                                    placeholder = { Text(stringResource(R.string.tray_settings_capacity_flex_placeholder)) },
+                                    modifier = Modifier.width(90.dp),
                                     singleLine = true,
                                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                                 )
                             }
                         }
-                        Spacer(Modifier.height(10.dp))
+                    }
+
+                    if (anyFlexible) {
+                        Spacer(Modifier.height(6.dp))
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text("허용 편차(±판)", style = MaterialTheme.typography.labelMedium, color = appColors.grey600, modifier = Modifier.weight(1f))
-                            IconButton(onClick = { maxDeviation = (maxDeviation - 1).coerceAtLeast(0) }) { Text("–") }
-                            Text("$maxDeviation")
-                            IconButton(onClick = { maxDeviation++ }) { Text("+") }
+                            Text(stringResource(R.string.tray_settings_flex_deviation_label), style = MaterialTheme.typography.labelMedium, color = appColors.grey600, modifier = Modifier.weight(1f))
+                            IconButton(onClick = { flexDeviation = (flexDeviation - 1).coerceAtLeast(0) }) { Text("–") }
+                            Text("$flexDeviation")
+                            IconButton(onClick = { flexDeviation++ }) { Text("+") }
                         }
                     }
 
                     Spacer(Modifier.height(10.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("1차 누락 허용 종류 수", style = MaterialTheme.typography.labelMedium, color = appColors.grey600, modifier = Modifier.weight(1f))
+                        Text(stringResource(R.string.tray_settings_missing_types_label), style = MaterialTheme.typography.labelMedium, color = appColors.grey600, modifier = Modifier.weight(1f))
                         IconButton(onClick = { allowedMissingTypes = (allowedMissingTypes - 1).coerceAtLeast(0) }) { Text("–") }
                         Text("$allowedMissingTypes")
                         IconButton(onClick = { allowedMissingTypes++ }) { Text("+") }
                     }
 
+                    Spacer(Modifier.height(10.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(stringResource(R.string.tray_settings_top_n_label), style = MaterialTheme.typography.labelMedium, color = appColors.grey600, modifier = Modifier.weight(1f))
+                        OutlinedTextField(
+                            value = topNText,
+                            onValueChange = { topNText = it.filter(Char::isDigit).take(2) },
+                            modifier = Modifier.width(70.dp),
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                        )
+                    }
+
+                    Spacer(Modifier.height(10.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Star, contentDescription = null, tint = appColors.warning500, modifier = Modifier.size(16.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            text = stringResource(R.string.tray_settings_primary_location_prefix, primaryLocationName) +
+                                (primaryLocationSpace?.capacity?.let {
+                                    stringResource(R.string.tray_settings_primary_location_capacity_suffix, it)
+                                } ?: ""),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = appColors.grey600
+                        )
+                    }
+                    Text(
+                        text = stringResource(R.string.tray_settings_primary_location_hint),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = appColors.grey500
+                    )
+
                     Spacer(Modifier.height(16.dp))
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                     Spacer(Modifier.height(10.dp))
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth().clickable { showAdvanced = !showAdvanced },
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("고급 설정", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = appColors.grey700, modifier = Modifier.weight(1f))
-                        Icon(if (showAdvanced) Icons.Default.ExpandLess else Icons.Default.ExpandMore, contentDescription = null, tint = appColors.grey500)
+                    ClickShrinkEffect(onClick = { showAdvanced = !showAdvanced }, shrinkFactor = 0.97f) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(stringResource(R.string.tray_settings_advanced_label), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = appColors.grey700, modifier = Modifier.weight(1f))
+                            Icon(if (showAdvanced) Icons.Default.ExpandLess else Icons.Default.ExpandMore, contentDescription = null, tint = appColors.grey500)
+                        }
                     }
 
                     if (showAdvanced) {
                         Spacer(Modifier.height(12.dp))
                         LevelPicker(
-                            "분산 선호 강도",
-                            "같은 종류의 과자가 여러 차수에 걸쳐 고르게 나타나도록 하는 정도예요. " +
-                                "'상'으로 갈수록 한 차수에 몰아넣지 않고 여러 차수에 나눠 담으려는 경향이 강해져요.",
+                            stringResource(R.string.tray_settings_spread_label),
+                            stringResource(R.string.tray_settings_spread_desc),
                             spreadStrength
                         ) { spreadStrength = it }
                         Spacer(Modifier.height(12.dp))
                         LevelPicker(
-                            "종류 순서 엄격도",
-                            "차수가 진행될수록(1차→2차→3차…) 등장하는 과자 종류 수가 줄어드는 흐름을 얼마나 엄격히 지킬지예요. " +
-                                "'상'일수록 뒤 차수에 새로운 종류가 섞이는 걸 강하게 피해요.",
+                            stringResource(R.string.tray_settings_order_label),
+                            stringResource(R.string.tray_settings_order_desc),
                             orderStrictness
                         ) { orderStrictness = it }
                         Spacer(Modifier.height(12.dp))
                         LevelPicker(
-                            "수량 밸런스 민감도",
-                            "차수별로 담긴 양(개수)이 한쪽에 몰리지 않도록 신경 쓰는 정도예요. " +
-                                "'상'일수록 양이 많은 차수를 더 적극적으로 줄이려고 해요.",
-                            qtySensitivity
-                        ) { qtySensitivity = it }
-                    }
-
-                    Spacer(Modifier.height(20.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-                        TextButton(onClick = onDismiss, modifier = Modifier.weight(1f)) { Text("취소", color = appColors.grey600) }
-                        Button(
-                            enabled = !(isExactMode && exactValues.count { it.isBlank() } > 1),
-                            onClick = {
-                                onConfirm(
-                                    AllocationSettingsUi(
-                                        rounds = rounds,
-                                        isExactMode = isExactMode,
-                                        exactTraysPerRound = exactValues.map { it.toIntOrNull() },
-                                        ratioPercents = ratioValues.map { it.toDoubleOrNull() ?: (100.0 / rounds) },
-                                        maxDeviation = maxDeviation,
-                                        allowedMissingTypes = allowedMissingTypes,
-                                        spreadStrength = spreadStrength,
-                                        orderStrictness = orderStrictness,
-                                        qtySensitivity = qtySensitivity
-                                    )
-                                )
-                            },
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Text("저장")
+                            stringResource(R.string.tray_settings_move_label),
+                            stringResource(R.string.tray_settings_move_desc),
+                            moveAversion
+                        ) { moveAversion = it }
+                        Spacer(Modifier.height(12.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            InfoLabel(
+                                stringResource(R.string.tray_settings_ils_label),
+                                stringResource(R.string.tray_settings_ils_desc)
+                            )
+                            Spacer(Modifier.weight(1f))
+                            OutlinedTextField(
+                                value = ilsIterationsText,
+                                onValueChange = { ilsIterationsText = it.filter(Char::isDigit).take(3) },
+                                modifier = Modifier.width(70.dp),
+                                singleLine = true,
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                            )
                         }
+                    }
+                }
+
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier.fillMaxWidth().padding(20.dp)
+                ) {
+                    TextButton(onClick = onDismiss, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.cancel), color = appColors.grey600) }
+                    Button(
+                        enabled = capacityValid,
+                        onClick = {
+                            val capacity = capacityRows.map { row ->
+                                if (row.isFixed) RoundCapacity.Fixed(row.fixedText.toIntOrNull() ?: 0)
+                                else RoundCapacity.Flexible(row.flexText.toDoubleOrNull() ?: 1.0)
+                            }
+                            onConfirm(
+                                AllocationSettingsUi(
+                                    rounds = rounds,
+                                    capacity = capacity,
+                                    flexDeviation = flexDeviation,
+                                    allowedMissingTypes = allowedMissingTypes,
+                                    primaryLocationSpaceId = settings.primaryLocationSpaceId,
+                                    topN = topNText.toIntOrNull()?.coerceAtLeast(1) ?: 5,
+                                    ilsIterations = ilsIterationsText.toIntOrNull()?.coerceAtLeast(1) ?: 6,
+                                    spreadStrength = spreadStrength,
+                                    orderStrictness = orderStrictness,
+                                    moveAversion = moveAversion
+                                )
+                            )
+                        },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(stringResource(R.string.save))
                     }
                 }
             }
