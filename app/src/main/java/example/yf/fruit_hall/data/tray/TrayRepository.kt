@@ -1,9 +1,9 @@
 package example.yf.fruit_hall.data.tray
 
 import example.yf.fruit_hall.core.AllocationConfig
-import example.yf.fruit_hall.core.CapacityMode
 import example.yf.fruit_hall.core.Level
 import example.yf.fruit_hall.core.RoughSize
+import example.yf.fruit_hall.core.RoundCapacity
 import example.yf.fruit_hall.core.Tray
 import example.yf.fruit_hall.core.TrayItem
 import example.yf.fruit_hall.core.TuningPresets
@@ -49,6 +49,10 @@ class TrayRepository @Inject constructor(
 
     suspend fun deleteSpace(space: SpaceEntity) = spaceDao.delete(space)
 
+    suspend fun renameSpace(id: Long, name: String) = spaceDao.updateName(id, name)
+
+    suspend fun setSpaceCapacity(id: Long, capacity: Int?) = spaceDao.updateCapacity(id, capacity)
+
     suspend fun addSnackType(name: String, colorHex: String, secondaryColorHex: String?, sortOrder: Int) =
         snackTypeDao.insert(
             SnackTypeEntity(name = name, colorHex = colorHex, secondaryColorHex = secondaryColorHex, sortOrder = sortOrder)
@@ -57,6 +61,8 @@ class TrayRepository @Inject constructor(
     suspend fun deleteSnackType(snackType: SnackTypeEntity) = snackTypeDao.delete(snackType)
 
     suspend fun reorderSnackTypes(orderedIds: List<Long>) = snackTypeDao.updateSortOrders(orderedIds)
+
+    suspend fun setSnackTypeActive(id: Long, isActive: Boolean) = snackTypeDao.updateActive(id, isActive)
 
     suspend fun addTray(spaceId: Long, sortOrder: Int): Long =
         trayDao.insert(TrayEntity(spaceId = spaceId, sortOrder = sortOrder))
@@ -94,7 +100,7 @@ class TrayRepository @Inject constructor(
     suspend fun logManualEdit(trayId: Long, fromRound: Int, toRound: Int) =
         editLogDao.insert(ManualEditLogEntity(trayId = trayId, fromRound = fromRound, toRound = toRound))
 
-    /** 데이터 계층 join 책임: Room 엔티티 → 엔진 순수 도메인 모델 */
+    /** 데이터 계층 join 책임: Room 엔티티 → 엔진 순수 도메인 모델. location은 진열 공간(spaceId)을 그대로 재사용 */
     fun buildEngineTrays(trays: List<TrayEntity>, items: List<TrayItemEntity>): List<Tray> {
         val itemsByTray = items.groupBy { it.trayId }
         return trays.map { tray ->
@@ -105,43 +111,54 @@ class TrayRepository @Inject constructor(
                     roughSize = item.roughSize?.let { RoughSize.valueOf(it) }
                 )
             }
-            Tray(id = tray.id.toString(), items = trayItems, pinnedRound = tray.pinnedRound)
+            Tray(
+                id = tray.id.toString(),
+                items = trayItems,
+                pinnedRound = tray.pinnedRound,
+                location = tray.spaceId.toString()
+            )
         }
     }
 
-    fun buildAllocationConfig(settings: AllocationSettingsEntity): AllocationConfig {
-        val capacity = if (settings.capacityModeType == "EXACT") {
-            CapacityMode.Exact(parseExactCsv(settings.exactTraysPerRoundCsv, settings.rounds))
-        } else {
-            CapacityMode.Ratio(parseRatioCsv(settings.ratioPercentsCsv, settings.rounds), settings.maxDeviation)
-        }
+    fun buildAllocationConfig(settings: AllocationSettingsEntity, spaces: List<SpaceEntity>): AllocationConfig {
+        val primaryLocationCapacity = spaces.find { it.id == settings.primaryLocationSpaceId }?.capacity
         return AllocationConfig(
             rounds = settings.rounds,
-            capacity = capacity,
+            capacity = parseCapacityCsv(settings.capacityCsv, settings.rounds),
+            flexDeviation = settings.flexDeviation,
             allowedMissingTypes = settings.allowedMissingTypes,
+            primaryLocation = settings.primaryLocationSpaceId?.toString(),
+            primaryLocationCapacity = primaryLocationCapacity,
+            topN = settings.topN,
             presets = TuningPresets(
                 spreadStrength = Level.valueOf(settings.spreadStrength),
                 orderStrictness = Level.valueOf(settings.orderStrictness),
-                qtySensitivity = Level.valueOf(settings.qtySensitivity)
-            )
+                qtySensitivity = Level.MID, // 설정 화면에서 제거됨 — 고정값. 수량이 실제로 다 입력됐을 때만 쓰이는 약한 보정
+                moveAversion = Level.valueOf(settings.moveAversion)
+            ),
+            ilsIterations = settings.ilsIterations
         )
     }
 
-    private fun parseExactCsv(csv: String, rounds: Int): List<Int?> {
-        val tokens = csv.split(",")
-        return List(rounds) { i -> tokens.getOrNull(i)?.trim()?.toIntOrNull() }
-    }
-
-    private fun parseRatioCsv(csv: String, rounds: Int): List<Double> {
-        val tokens = csv.split(",").mapNotNull { it.trim().toDoubleOrNull() }
-        return if (tokens.size == rounds) tokens else List(rounds) { 100.0 / rounds }
-    }
-
     companion object {
-        fun exactCsv(traysPerRound: List<Int?>): String =
-            traysPerRound.joinToString(",") { it?.toString() ?: "" }
+        fun capacityCsv(capacity: List<RoundCapacity>): String =
+            capacity.joinToString(",") { cap ->
+                when (cap) {
+                    is RoundCapacity.Fixed -> "F${cap.trays}"
+                    is RoundCapacity.Flexible -> "X${cap.weight}"
+                }
+            }
 
-        fun ratioCsv(percents: List<Double>): String =
-            percents.joinToString(",") { it.toString() }
+        fun parseCapacityCsv(csv: String, rounds: Int): List<RoundCapacity> {
+            val tokens = csv.split(",").map { it.trim() }
+            val parsed = tokens.mapNotNull { token ->
+                when {
+                    token.startsWith("F") -> token.drop(1).toIntOrNull()?.let { RoundCapacity.Fixed(it) }
+                    token.startsWith("X") -> token.drop(1).toDoubleOrNull()?.let { RoundCapacity.Flexible(it) }
+                    else -> null
+                }
+            }
+            return if (parsed.size == rounds) parsed else List(rounds) { RoundCapacity.Flexible(1.0) }
+        }
     }
 }

@@ -22,6 +22,9 @@ interface SnackTypeDao {
     @Query("UPDATE snack_types SET sortOrder = :sortOrder WHERE id = :id")
     suspend fun updateSortOrder(id: Long, sortOrder: Int)
 
+    @Query("UPDATE snack_types SET isActive = :isActive WHERE id = :id")
+    suspend fun updateActive(id: Long, isActive: Boolean)
+
     @androidx.room.Transaction
     suspend fun updateSortOrders(orderedIds: List<Long>) {
         orderedIds.forEachIndexed { index, id -> updateSortOrder(id, index) }

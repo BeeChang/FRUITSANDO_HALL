@@ -27,7 +27,7 @@ import example.yf.fruit_hall.data.tray.entity.TrayItemEntity
         AllocationHistoryEntity::class,
         ManualEditLogEntity::class
     ],
-    version = 2,
+    version = 6,
     exportSchema = false
 )
 abstract class TrayDatabase : RoomDatabase() {

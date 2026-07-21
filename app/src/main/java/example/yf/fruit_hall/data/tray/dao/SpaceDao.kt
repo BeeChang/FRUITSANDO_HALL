@@ -19,6 +19,12 @@ interface SpaceDao {
     @Delete
     suspend fun delete(space: SpaceEntity)
 
+    @Query("UPDATE tray_spaces SET name = :name WHERE id = :id")
+    suspend fun updateName(id: Long, name: String)
+
+    @Query("UPDATE tray_spaces SET capacity = :capacity WHERE id = :id")
+    suspend fun updateCapacity(id: Long, capacity: Int?)
+
     @Query("SELECT COUNT(*) FROM tray_spaces")
     suspend fun count(): Int
 }
