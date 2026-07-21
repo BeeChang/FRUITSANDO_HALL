@@ -15,6 +15,20 @@ data class RoundSummary(
     val trays: List<RoundTraySummary>
 )
 
+/** 1차에 배정됐지만 판의 진열 위치(spaceId)가 primaryLocation과 다른 판 id 집합 — "이동" 배지 대상 */
+fun needsMoveTrayIds(trays: List<TrayUi>, assignment: Map<Long, Int>, primaryLocationSpaceId: Long?): Set<Long> {
+    if (primaryLocationSpaceId == null) return emptySet()
+    return trays.filter { assignment[it.id] == 1 && it.spaceId != primaryLocationSpaceId }
+        .mapTo(mutableSetOf()) { it.id }
+}
+
+/** 오늘 사용 중인(활성) 품목 중 1차에 하나도 배정되지 않은 것 — 등록 누락 확인용 */
+fun missingActiveTypes(snackTypes: List<SnackTypeUi>, trays: List<TrayUi>, assignment: Map<Long, Int>): List<SnackTypeUi> {
+    val round1TypeIds = trays.filter { assignment[it.id] == 1 }
+        .flatMap { it.items }.mapTo(mutableSetOf()) { it.snackTypeId }
+    return snackTypes.filter { it.isActive && it.id !in round1TypeIds }
+}
+
 fun buildRoundSummaries(trays: List<TrayUi>, assignment: Map<Long, Int>, rounds: Int): List<RoundSummary> {
     return (1..rounds).map { round ->
         val roundTrays = trays.filter { assignment[it.id] == round }

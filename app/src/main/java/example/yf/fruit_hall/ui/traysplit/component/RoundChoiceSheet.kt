@@ -23,8 +23,10 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import example.yf.fruit_hall.R
 import example.yf.fruit_hall.ui.theme.AppTheme
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -64,7 +66,7 @@ fun RoundChoiceSheet(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "${round}차",
+                            text = stringResource(R.string.tray_round_ordinal, round),
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             color = if (isSelected) appColors.white else MaterialTheme.colorScheme.onSurfaceVariant
@@ -86,7 +88,7 @@ fun RoundChoiceSheet(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "고정 해제",
+                        text = stringResource(R.string.tray_round_choice_clear),
                         style = MaterialTheme.typography.bodyMedium,
                         color = appColors.crimson400,
                         fontWeight = FontWeight.SemiBold

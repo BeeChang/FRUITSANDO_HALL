@@ -15,19 +15,24 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bolt
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -41,12 +46,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import example.yf.fruit_hall.R
 import example.yf.fruit_hall.core.AllocationCandidate
-import example.yf.fruit_hall.ui.component.AppOnlyConfirmDialog
 import example.yf.fruit_hall.ui.theme.AppTheme
 import kotlin.math.roundToInt
 
@@ -54,6 +60,7 @@ import kotlin.math.roundToInt
 fun AllocationResultDialog(
     attemptCount: Int,
     candidates: List<AllocationCandidate>,
+    labels: List<CandidateLabel>,
     onOpenSummary: (Int) -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -72,7 +79,10 @@ fun AllocationResultDialog(
         revealed = true
     }
 
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false, dismissOnClickOutside = false)
+    ) {
         Card(
             shape = RoundedCornerShape(24.dp),
             modifier = Modifier.widthIn(max = 560.dp).fillMaxWidth(0.55f),
@@ -81,23 +91,26 @@ fun AllocationResultDialog(
             Column {
                 Row(
                     modifier = Modifier.fillMaxWidth().background(appColors.grey900)
-                        .padding(start = 20.dp, end = 20.dp, top = 14.dp, bottom = 14.dp),
+                        .padding(start = 20.dp, end = 8.dp, top = 14.dp, bottom = 14.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(Icons.Default.Bolt, contentDescription = null, tint = appColors.warning500)
                     Spacer(Modifier.width(10.dp))
-                    Text("배분 결과", style = MaterialTheme.typography.titleMedium, color = appColors.white, modifier = Modifier.weight(1f))
+                    Text(stringResource(R.string.tray_result_dialog_title), style = MaterialTheme.typography.titleMedium, color = appColors.white, modifier = Modifier.weight(1f))
+                    IconButton(onClick = onDismiss) {
+                        Icon(Icons.Default.Close, contentDescription = stringResource(R.string.cd_close), tint = appColors.grey300, modifier = Modifier.size(18.dp))
+                    }
                 }
 
                 Column(modifier = Modifier.padding(20.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            text = "경우의 수 탐색 ",
+                            text = stringResource(R.string.tray_result_exploration_label),
                             style = MaterialTheme.typography.bodyMedium,
                             color = appColors.grey600
                         )
                         Text(
-                            text = "${displayedCount}회",
+                            text = stringResource(R.string.tray_result_exploration_count, displayedCount),
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.ExtraBold,
                             color = appColors.primary500
@@ -113,15 +126,21 @@ fun AllocationResultDialog(
                     }
 
                     AnimatedVisibility(visible = revealed, enter = fadeIn() + expandVertically()) {
-                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Column(
+                            modifier = Modifier.heightIn(max = 420.dp).verticalScroll(rememberScrollState()),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
                             Text(
-                                text = "상위 후보 ${candidates.size}개 — 탭하면 차수별 내용을 볼 수 있어요",
+                                text = stringResource(R.string.tray_result_candidates_hint, candidates.size),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = appColors.grey500
                             )
                             candidates.forEachIndexed { index, candidate ->
                                 CandidateCard(
                                     candidate = candidate,
+                                    label = labels.getOrElse(index) {
+                                        CandidateLabel.Alternative(index + 1)
+                                    }.resolve(),
                                     onClick = { onOpenSummary(index) }
                                 )
                             }
@@ -130,7 +149,7 @@ fun AllocationResultDialog(
 
                     Spacer(Modifier.height(16.dp))
                     TextButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
-                        Text("닫기", color = appColors.grey600)
+                        Text(stringResource(R.string.cd_close), color = appColors.grey600)
                     }
                 }
             }
@@ -141,10 +160,10 @@ fun AllocationResultDialog(
 @Composable
 private fun CandidateCard(
     candidate: AllocationCandidate,
+    label: String,
     onClick: () -> Unit
 ) {
     val appColors = AppTheme.colors
-    var showInfo by remember { mutableStateOf(false) }
 
     Card(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
@@ -154,27 +173,26 @@ private fun CandidateCard(
         Column(modifier = Modifier.padding(14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = strategyDisplayName(candidate.strategyName),
+                    text = label,
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-                Spacer(Modifier.width(4.dp))
-                Icon(
-                    imageVector = Icons.Outlined.Info,
-                    contentDescription = "이 방식 설명 보기",
-                    tint = appColors.grey400,
-                    modifier = Modifier.size(16.dp).clickable { showInfo = true }
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    text = stringResource(R.string.tray_candidate_score_label, candidate.score),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = appColors.grey500
                 )
                 Spacer(modifier = Modifier.weight(1f))
                 if (candidate.violations.isEmpty()) {
-                    Text("완벽", style = MaterialTheme.typography.labelSmall, color = appColors.success500, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.tray_candidate_perfect), style = MaterialTheme.typography.labelSmall, color = appColors.success500, fontWeight = FontWeight.Bold)
                 } else {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.Warning, contentDescription = null, tint = appColors.warning500, modifier = Modifier.size(14.dp))
                         Spacer(Modifier.width(3.dp))
                         Text(
-                            text = "위반 ${candidate.violations.size}",
+                            text = stringResource(R.string.tray_candidate_violation_label, candidate.violations.size),
                             style = MaterialTheme.typography.labelSmall,
                             color = appColors.warning500,
                             fontWeight = FontWeight.Bold
@@ -190,21 +208,34 @@ private fun CandidateCard(
                         modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(roundBg.copy(alpha = 0.28f))
                             .padding(horizontal = 10.dp, vertical = 6.dp)
                     ) {
-                        Text("${i + 1}차 ${size}판", style = MaterialTheme.typography.labelSmall, color = roundText, fontWeight = FontWeight.Bold)
+                        Text(
+                            stringResource(R.string.tray_candidate_round_size_label, i + 1, size),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = roundText,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+                if (candidate.moveCount > 0) {
+                    Box(
+                        modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(appColors.warning500.copy(alpha = 0.18f))
+                            .padding(horizontal = 10.dp, vertical = 6.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.LocalShipping, contentDescription = null, tint = appColors.warning500, modifier = Modifier.size(13.dp))
+                            Spacer(Modifier.width(3.dp))
+                            Text(
+                                stringResource(R.string.tray_candidate_move_label, candidate.moveCount),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = appColors.warning500,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 }
             }
             Spacer(Modifier.height(8.dp))
-            Text("탭해서 차수별 내용 보기", style = MaterialTheme.typography.labelSmall, color = appColors.grey500)
+            Text(stringResource(R.string.tray_candidate_tap_hint), style = MaterialTheme.typography.labelSmall, color = appColors.grey500)
         }
     }
-
-    AppOnlyConfirmDialog(
-        title = strategyDisplayName(candidate.strategyName),
-        content = strategyDescription(candidate.strategyName),
-        confirmButtonText = "확인",
-        isShowDialog = showInfo,
-        onConfirm = { showInfo = false },
-        onDismiss = { showInfo = false }
-    )
 }

@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -21,6 +22,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.FactCheck
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.WarningAmber
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -32,28 +34,42 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import example.yf.fruit_hall.R
+import example.yf.fruit_hall.ui.component.util.ClickShrinkEffect
 import example.yf.fruit_hall.ui.theme.AppTheme
 import example.yf.fruit_hall.ui.traysplit.RoundSummary
+import example.yf.fruit_hall.ui.traysplit.SnackTypeUi
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun RoundSummaryDialog(
-    title: String = "차수별 총정리",
+    title: String = stringResource(R.string.tray_overall_summary_title),
     summaries: List<RoundSummary>,
     violations: List<String> = emptyList(),
+    needsMoveIds: Set<Long> = emptySet(),
+    missingItems: List<SnackTypeUi> = emptyList(),
     onSelectCandidate: (() -> Unit)? = null,
     onDismiss: () -> Unit
 ) {
     val appColors = AppTheme.colors
+    var showTextSummary by remember { mutableStateOf(false) }
 
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false, dismissOnClickOutside = false)
+    ) {
         Card(
             shape = RoundedCornerShape(24.dp),
             modifier = Modifier.widthIn(max = 820.dp).fillMaxWidth(0.8f),
@@ -68,8 +84,19 @@ fun RoundSummaryDialog(
                     Icon(Icons.AutoMirrored.Filled.FactCheck, contentDescription = null, tint = appColors.white)
                     Spacer(Modifier.width(10.dp))
                     Text(title, style = MaterialTheme.typography.titleMedium, color = appColors.white, modifier = Modifier.weight(1f))
+                    ClickShrinkEffect(onClick = { showTextSummary = true }, shrinkFactor = 0.93f) {
+                        Text(
+                            text = stringResource(R.string.tray_summary_view_result),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = appColors.white,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .padding(horizontal = 10.dp, vertical = 6.dp)
+                        )
+                    }
                     IconButton(onClick = onDismiss) {
-                        Icon(Icons.Default.Close, contentDescription = "닫기", tint = appColors.grey300)
+                        Icon(Icons.Default.Close, contentDescription = stringResource(R.string.cd_close), tint = appColors.grey300)
                     }
                 }
 
@@ -79,6 +106,41 @@ fun RoundSummaryDialog(
                         .verticalScroll(rememberScrollState())
                         .padding(20.dp)
                 ) {
+                    if (missingItems.isNotEmpty()) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.WarningAmber, contentDescription = null, tint = appColors.warning500, modifier = Modifier.size(16.dp))
+                            Spacer(Modifier.width(6.dp))
+                            Text(
+                                text = stringResource(R.string.tray_summary_missing_items_label),
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.SemiBold,
+                                color = appColors.warning500
+                            )
+                        }
+                        Spacer(Modifier.height(8.dp))
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            missingItems.forEach { type ->
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(50))
+                                        .border(1.dp, appColors.warning500.copy(alpha = 0.5f), RoundedCornerShape(50))
+                                        .snackColorBackground(type.colorHex, type.secondaryColorHex, alpha = 0.25f)
+                                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                                ) {
+                                    Text(
+                                        text = type.name,
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = androidx.compose.ui.graphics.Color(0xFF2D2D2D)
+                                    )
+                                }
+                            }
+                        }
+                        Spacer(Modifier.height(16.dp))
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                        Spacer(Modifier.height(16.dp))
+                    }
+
                     summaries.forEachIndexed { index, summary ->
                         val (roundBg, roundText) = roundColorFor(summary.round)
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -87,7 +149,7 @@ fun RoundSummaryDialog(
                                     .padding(horizontal = 14.dp, vertical = 6.dp)
                             ) {
                                 Text(
-                                    text = "${summary.round}차",
+                                    text = stringResource(R.string.tray_round_ordinal, summary.round),
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.ExtraBold,
                                     color = roundText
@@ -95,7 +157,7 @@ fun RoundSummaryDialog(
                             }
                             Spacer(Modifier.width(10.dp))
                             Text(
-                                text = "${summary.trayCount}판 · 약 ${summary.approxQty}개",
+                                text = stringResource(R.string.tray_summary_tray_count_qty, summary.trayCount, summary.approxQty),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.SemiBold,
                                 color = appColors.grey600
@@ -104,13 +166,13 @@ fun RoundSummaryDialog(
                         Spacer(Modifier.height(10.dp))
                         if (summary.items.isEmpty()) {
                             Text(
-                                text = "배정된 판이 없습니다",
+                                text = stringResource(R.string.tray_summary_no_trays),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = appColors.grey400
                             )
                         } else {
                             Text(
-                                text = "전체 품목",
+                                text = stringResource(R.string.tray_summary_all_items_label),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = appColors.grey500
                             )
@@ -135,7 +197,7 @@ fun RoundSummaryDialog(
 
                             Spacer(Modifier.height(14.dp))
                             Text(
-                                text = "판별 배치 (${summary.trays.size}판)",
+                                text = stringResource(R.string.tray_summary_tray_layout_label, summary.trays.size),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = appColors.grey500
                             )
@@ -149,16 +211,42 @@ fun RoundSummaryDialog(
                                             .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f), RoundedCornerShape(12.dp))
                                             .padding(8.dp)
                                     ) {
-                                        Text(
-                                            text = "판 ${trayIndex + 1}",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            fontWeight = FontWeight.Bold,
-                                            color = appColors.grey600
-                                        )
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text(
+                                                text = stringResource(R.string.tray_summary_tray_index_label, trayIndex + 1),
+                                                style = MaterialTheme.typography.labelSmall,
+                                                fontWeight = FontWeight.Bold,
+                                                color = appColors.grey600
+                                            )
+                                            if (traySummary.trayId in needsMoveIds) {
+                                                Spacer(Modifier.width(4.dp))
+                                                Box(
+                                                    modifier = Modifier.clip(RoundedCornerShape(50))
+                                                        .background(appColors.warning500.copy(alpha = 0.2f))
+                                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                                ) {
+                                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                                        Icon(
+                                                            Icons.Default.LocalShipping,
+                                                            contentDescription = null,
+                                                            tint = appColors.warning500,
+                                                            modifier = Modifier.height(10.dp)
+                                                        )
+                                                        Spacer(Modifier.width(2.dp))
+                                                        Text(
+                                                            stringResource(R.string.tray_summary_move_needed),
+                                                            style = MaterialTheme.typography.labelSmall,
+                                                            fontWeight = FontWeight.Bold,
+                                                            color = appColors.warning500
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
                                         Spacer(Modifier.height(5.dp))
                                         if (traySummary.items.isEmpty()) {
                                             Text(
-                                                text = "비어있음",
+                                                text = stringResource(R.string.tray_summary_empty_tray),
                                                 style = MaterialTheme.typography.labelSmall,
                                                 color = appColors.grey400
                                             )
@@ -197,7 +285,7 @@ fun RoundSummaryDialog(
                         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                         Spacer(Modifier.height(16.dp))
                         Text(
-                            text = "위반 사항",
+                            text = stringResource(R.string.tray_summary_violations_label),
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.SemiBold,
                             color = appColors.grey700
@@ -224,14 +312,14 @@ fun RoundSummaryDialog(
                 ) {
                     if (onSelectCandidate != null) {
                         TextButton(onClick = onDismiss, modifier = Modifier.weight(1f)) {
-                            Text("닫기", color = appColors.grey600)
+                            Text(stringResource(R.string.cd_close), color = appColors.grey600)
                         }
                         Button(
                             onClick = onSelectCandidate,
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(12.dp)
                         ) {
-                            Text("이 후보 선택")
+                            Text(stringResource(R.string.tray_summary_select_candidate))
                         }
                     } else {
                         Button(
@@ -239,11 +327,18 @@ fun RoundSummaryDialog(
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp)
                         ) {
-                            Text("닫기")
+                            Text(stringResource(R.string.cd_close))
                         }
                     }
                 }
             }
         }
+    }
+
+    if (showTextSummary) {
+        TextSummaryDialog(
+            summaries = summaries,
+            onDismiss = { showTextSummary = false }
+        )
     }
 }
