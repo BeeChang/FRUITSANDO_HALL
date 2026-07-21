@@ -47,7 +47,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import example.yf.fruit_hall.ui.component.AppConfirmButton
-import kotlin.math.floor
+import example.yf.fruit_hall.ui.component.util.toTrimmedDecimalString
 
 private val ingredientColors = listOf(
     Color(0xFF43A047),  // 멜론 - 그린
@@ -270,8 +270,4 @@ private fun ActionBar(onReset: () -> Unit) {
     }
 }
 
-private fun Double.toGramString(): String {
-    val rounded = kotlin.math.round(this * 10) / 10.0
-    return if (rounded == floor(rounded)) "%.0f".format(rounded)
-    else "%.1f".format(rounded)
-}
+private fun Double.toGramString(): String = toTrimmedDecimalString()
