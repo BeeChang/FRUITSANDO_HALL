@@ -1,7 +1,6 @@
 package example.yf.fruit_hall.ui.traysplit
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -23,14 +22,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Casino
 import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.Save
-import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -51,13 +47,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import example.yf.fruit_hall.core.RoughSize
+import example.yf.fruit_hall.R
 import example.yf.fruit_hall.ui.component.AppDialog
 import example.yf.fruit_hall.ui.component.util.ClickShrinkEffect
 import example.yf.fruit_hall.ui.theme.AppTheme
@@ -65,16 +62,26 @@ import example.yf.fruit_hall.ui.traysplit.component.AddSpaceDialog
 import example.yf.fruit_hall.ui.traysplit.component.AddTrayDialog
 import example.yf.fruit_hall.ui.traysplit.component.AllocationResultDialog
 import example.yf.fruit_hall.ui.traysplit.component.AllocationSettingsDialog
+import example.yf.fruit_hall.ui.traysplit.component.CandidateLabel
+import example.yf.fruit_hall.ui.traysplit.component.HelpDialog
+import example.yf.fruit_hall.ui.traysplit.component.RenameSpaceDialog
 import example.yf.fruit_hall.ui.traysplit.component.RoundChoiceSheet
 import example.yf.fruit_hall.ui.traysplit.component.RoundSummaryDialog
+import example.yf.fruit_hall.ui.traysplit.component.resolve
 import example.yf.fruit_hall.ui.traysplit.component.roundColorFor
 import example.yf.fruit_hall.ui.traysplit.component.SnackChipPalette
 import example.yf.fruit_hall.ui.traysplit.component.SnackTypeManageDialog
 import example.yf.fruit_hall.ui.traysplit.component.SpaceColumn
-import example.yf.fruit_hall.ui.traysplit.component.strategyDisplayName
 import example.yf.fruit_hall.ui.traysplit.component.toSnackColor
 import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
+
+@Composable
+private fun TraySplitMessage.resolve(): String = when (this) {
+    is TraySplitMessage.AllocationSettingsError -> stringResource(R.string.tray_snackbar_settings_error, detail)
+    TraySplitMessage.ResetDone -> stringResource(R.string.tray_snackbar_reset_done)
+    TraySplitMessage.SaveDone -> stringResource(R.string.tray_snackbar_save_done)
+}
 
 @Composable
 fun TraySplitScreen(
@@ -82,6 +89,7 @@ fun TraySplitScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val onEvent = viewModel::onEvent
+    val activeSnackTypes = uiState.snackTypes.filter { it.isActive } // 재고 이슈 등으로 오늘 미사용인 품목은 팔레트/판추가에서 제외
 
     var draggedType by remember { mutableStateOf<SnackTypeUi?>(null) }
     var dragWindowPos by remember { mutableStateOf(Offset.Zero) }
@@ -89,6 +97,7 @@ fun TraySplitScreen(
     var highlightedTrayId by remember { mutableStateOf<Long?>(null) }
     var rootBoundsInWindow by remember { mutableStateOf(Rect.Zero) }
     var showResetConfirm by remember { mutableStateOf(false) }
+    var showHelpDialog by remember { mutableStateOf(false) }
 
     // 삭제/초기화된 판의 낡은 좌표가 남아있으면 드롭 시 존재하지 않는 trayId로 INSERT가 나가
     // FK 제약 위반 크래시가 난다. 판 목록이 바뀔 때마다 현재 존재하는 trayId만 남긴다.
@@ -109,7 +118,7 @@ fun TraySplitScreen(
         val target = highlightedTrayId
         val type = draggedType
         if (target != null && type != null) {
-            onEvent(TraySplitEvent.AddItemToTray(target, type.id, RoughSize.M))
+            onEvent(TraySplitEvent.AddItemToTray(target, type.id, roughSize = null))
         }
         draggedType = null
         highlightedTrayId = null
@@ -128,7 +137,7 @@ fun TraySplitScreen(
             if (isWide) {
                 Row(modifier = Modifier.fillMaxSize()) {
                     SnackChipPalette(
-                        snackTypes = uiState.snackTypes,
+                        snackTypes = activeSnackTypes,
                         onManageClick = { onEvent(TraySplitEvent.ShowSnackTypeDialog) },
                         onChipDragStart = ::onChipDragStart,
                         onChipDrag = ::onChipDrag,
@@ -137,7 +146,7 @@ fun TraySplitScreen(
                     )
                     VerticalDivider()
                     Column(modifier = Modifier.weight(1f).fillMaxHeight()) {
-                        TraySplitTopBar(uiState = uiState, onEvent = onEvent)
+                        TraySplitTopBar(uiState = uiState, onEvent = onEvent, onHelpClick = { showHelpDialog = true })
                         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                         TraySplitBody(
                             uiState = uiState,
@@ -151,10 +160,10 @@ fun TraySplitScreen(
                 }
             } else {
                 Column(modifier = Modifier.fillMaxSize()) {
-                    TraySplitTopBar(uiState = uiState, onEvent = onEvent)
+                    TraySplitTopBar(uiState = uiState, onEvent = onEvent, onHelpClick = { showHelpDialog = true })
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                     SnackChipPalette(
-                        snackTypes = uiState.snackTypes,
+                        snackTypes = activeSnackTypes,
                         onManageClick = { onEvent(TraySplitEvent.ShowSnackTypeDialog) },
                         onChipDragStart = ::onChipDragStart,
                         onChipDrag = ::onChipDrag,
@@ -206,7 +215,7 @@ fun TraySplitScreen(
             Box(modifier = Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.BottomCenter) {
                 Surface(shape = RoundedCornerShape(14.dp), color = AppTheme.colors.grey900) {
                     Text(
-                        text = message,
+                        text = message.resolve(),
                         style = MaterialTheme.typography.bodyMedium,
                         color = AppTheme.colors.white,
                         modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp)
@@ -223,19 +232,30 @@ fun TraySplitScreen(
         )
     }
 
+    uiState.renameSpaceTargetId?.let { spaceId ->
+        val space = uiState.spaces.find { it.id == spaceId }
+        RenameSpaceDialog(
+            currentName = space?.name.orEmpty(),
+            currentCapacity = space?.capacity,
+            onConfirm = { name, capacity -> onEvent(TraySplitEvent.RenameSpace(spaceId, name, capacity)) },
+            onDismiss = { onEvent(TraySplitEvent.HideRenameSpaceDialog) }
+        )
+    }
+
     if (uiState.showSnackTypeDialog) {
         SnackTypeManageDialog(
             snackTypes = uiState.snackTypes,
             onAdd = { name, color, secondary -> onEvent(TraySplitEvent.AddSnackType(name, color, secondary)) },
             onDelete = { onEvent(TraySplitEvent.DeleteSnackType(it)) },
             onReorder = { onEvent(TraySplitEvent.ReorderSnackTypes(it)) },
+            onToggleActive = { id, isActive -> onEvent(TraySplitEvent.SetSnackTypeActive(id, isActive)) },
             onDismiss = { onEvent(TraySplitEvent.HideSnackTypeDialog) }
         )
     }
 
     uiState.addTrayTargetSpaceId?.let { spaceId ->
         AddTrayDialog(
-            snackTypes = uiState.snackTypes,
+            snackTypes = activeSnackTypes,
             onConfirm = { items -> onEvent(TraySplitEvent.SubmitAddTrayDialog(spaceId, items)) },
             onDismiss = { onEvent(TraySplitEvent.HideAddTrayDialog) }
         )
@@ -244,6 +264,7 @@ fun TraySplitScreen(
     if (uiState.showSettingsDialog) {
         AllocationSettingsDialog(
             settings = uiState.settings,
+            spaces = uiState.spaces,
             onConfirm = { onEvent(TraySplitEvent.UpdateSettings(it)) },
             onDismiss = { onEvent(TraySplitEvent.HideSettingsDialog) }
         )
@@ -253,6 +274,7 @@ fun TraySplitScreen(
         AllocationResultDialog(
             attemptCount = uiState.attemptCount,
             candidates = uiState.candidates,
+            labels = uiState.candidateLabels,
             onOpenSummary = { onEvent(TraySplitEvent.ShowCandidateDetail(it)) },
             onDismiss = { onEvent(TraySplitEvent.HideResultDialog) }
         )
@@ -262,9 +284,13 @@ fun TraySplitScreen(
         uiState.candidates.getOrNull(index)?.let { candidate ->
             val candidateAssignment = candidate.assignment.entries.associate { it.key.toLong() to it.value }
             RoundSummaryDialog(
-                title = strategyDisplayName(candidate.strategyName),
+                title = uiState.candidateLabels.getOrElse(index) {
+                    CandidateLabel.Alternative(index + 1)
+                }.resolve(),
                 summaries = buildRoundSummaries(uiState.trays, candidateAssignment, uiState.settings.rounds),
                 violations = candidate.violations,
+                needsMoveIds = needsMoveTrayIds(uiState.trays, candidateAssignment, uiState.settings.primaryLocationSpaceId),
+                missingItems = missingActiveTypes(uiState.snackTypes, uiState.trays, candidateAssignment),
                 onSelectCandidate = { onEvent(TraySplitEvent.SelectCandidate(index)) },
                 onDismiss = { onEvent(TraySplitEvent.HideCandidateDetail) }
             )
@@ -273,8 +299,10 @@ fun TraySplitScreen(
 
     if (uiState.showOverallSummary) {
         RoundSummaryDialog(
-            title = "차수별 총정리",
+            title = stringResource(R.string.tray_overall_summary_title),
             summaries = buildRoundSummaries(uiState.trays, uiState.currentAssignment, uiState.settings.rounds),
+            needsMoveIds = needsMoveTrayIds(uiState.trays, uiState.currentAssignment, uiState.settings.primaryLocationSpaceId),
+            missingItems = missingActiveTypes(uiState.snackTypes, uiState.trays, uiState.currentAssignment),
             onDismiss = { onEvent(TraySplitEvent.HideOverallSummary) }
         )
     }
@@ -282,7 +310,7 @@ fun TraySplitScreen(
     uiState.pinSheetTrayId?.let { trayId ->
         val tray = uiState.trays.find { it.id == trayId }
         RoundChoiceSheet(
-            title = "차수 고정",
+            title = stringResource(R.string.tray_pin_round_title),
             rounds = uiState.settings.rounds,
             current = tray?.pinnedRound,
             onSelect = { round -> onEvent(TraySplitEvent.PinTray(trayId, round)) },
@@ -293,7 +321,7 @@ fun TraySplitScreen(
 
     uiState.roundPickerTrayId?.let { trayId ->
         RoundChoiceSheet(
-            title = "차수 변경",
+            title = stringResource(R.string.tray_change_round_title),
             rounds = uiState.settings.rounds,
             current = uiState.currentAssignment[trayId],
             onSelect = { round -> onEvent(TraySplitEvent.MoveTrayToRound(trayId, round)) },
@@ -302,16 +330,20 @@ fun TraySplitScreen(
     }
 
     AppDialog(
-        title = "초기화",
-        content = "오늘 등록한 판이 모두 삭제됩니다. 공간과 품목은 유지됩니다. 계속할까요?",
+        title = stringResource(R.string.tray_reset),
+        content = stringResource(R.string.tray_reset_dialog_content),
         isShowDialog = showResetConfirm,
         onConfirm = { onEvent(TraySplitEvent.ResetDay); showResetConfirm = false },
         onDismiss = { showResetConfirm = false }
     )
+
+    if (showHelpDialog) {
+        HelpDialog(onDismiss = { showHelpDialog = false })
+    }
 }
 
 @Composable
-private fun TraySplitTopBar(uiState: TraySplitUiState, onEvent: (TraySplitEvent) -> Unit) {
+private fun TraySplitTopBar(uiState: TraySplitUiState, onEvent: (TraySplitEvent) -> Unit, onHelpClick: () -> Unit) {
     val appColors = AppTheme.colors
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
@@ -319,13 +351,13 @@ private fun TraySplitTopBar(uiState: TraySplitUiState, onEvent: (TraySplitEvent)
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = "판나누기",
+                text = stringResource(R.string.screen_tray_split),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
-                text = "총 ${uiState.trays.size}판",
+                text = stringResource(R.string.tray_total_count, uiState.trays.size),
                 style = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.SemiBold,
                 color = appColors.primary600
@@ -334,27 +366,49 @@ private fun TraySplitTopBar(uiState: TraySplitUiState, onEvent: (TraySplitEvent)
         if (uiState.roundSizes.isNotEmpty()) {
             RoundSummaryStrip(roundSizes = uiState.roundSizes)
             Spacer(Modifier.width(10.dp))
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(appColors.grey900)
-                    .clickable { onEvent(TraySplitEvent.ShowOverallSummary) }
-                    .padding(horizontal = 14.dp, vertical = 10.dp)
-            ) {
-                Text(
-                    text = "총정리 확인",
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = appColors.white
-                )
+            ClickShrinkEffect(onClick = { onEvent(TraySplitEvent.ShowOverallSummary) }, shrinkFactor = 0.93f) {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(appColors.grey900)
+                        .padding(horizontal = 14.dp, vertical = 10.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.tray_overall_summary_check),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = appColors.white
+                    )
+                }
             }
             Spacer(Modifier.width(12.dp))
         }
-        IconButton(onClick = { onEvent(TraySplitEvent.ShowSpaceDialog) }) {
-            Icon(Icons.Default.Add, contentDescription = "공간 추가", tint = appColors.grey600)
+        ClickShrinkEffect(onClick = onHelpClick, shrinkFactor = 0.93f) {
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(10.dp))
+                    .padding(horizontal = 12.dp, vertical = 10.dp)
+            ) {
+                Text(stringResource(R.string.tray_menu_help), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = appColors.grey600)
+            }
         }
-        IconButton(onClick = { onEvent(TraySplitEvent.ShowSettingsDialog) }) {
-            Icon(Icons.Default.Tune, contentDescription = "배분 설정", tint = appColors.grey600)
+        ClickShrinkEffect(onClick = { onEvent(TraySplitEvent.ShowSpaceDialog) }, shrinkFactor = 0.93f) {
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(10.dp))
+                    .padding(horizontal = 12.dp, vertical = 10.dp)
+            ) {
+                Text(stringResource(R.string.tray_add_space), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = appColors.grey600)
+            }
+        }
+        ClickShrinkEffect(onClick = { onEvent(TraySplitEvent.ShowSettingsDialog) }, shrinkFactor = 0.93f) {
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(10.dp))
+                    .padding(horizontal = 12.dp, vertical = 10.dp)
+            ) {
+                Text(stringResource(R.string.tray_allocation_settings), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = appColors.grey600)
+            }
         }
     }
 }
@@ -369,7 +423,12 @@ private fun RoundSummaryStrip(roundSizes: List<Int>) {
                 modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(roundBg.copy(alpha = 0.28f))
                     .padding(horizontal = 10.dp, vertical = 6.dp)
             ) {
-                Text("${i + 1}차 ${size}", style = MaterialTheme.typography.bodyMedium, color = roundText, fontWeight = FontWeight.ExtraBold)
+                Text(
+                    stringResource(R.string.tray_round_size_label, i + 1, size),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = roundText,
+                    fontWeight = FontWeight.ExtraBold
+                )
             }
         }
     }
@@ -387,13 +446,15 @@ private fun TraySplitBody(
     if (uiState.spaces.isEmpty()) {
         Box(modifier = modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
             Text(
-                text = "우측 상단 + 로 공간을 추가하고 판을 등록해보세요",
+                text = stringResource(R.string.tray_empty_state_hint),
                 style = MaterialTheme.typography.bodyMedium,
                 color = appColors.grey400
             )
         }
         return
     }
+
+    val needsMoveIds = needsMoveTrayIds(uiState.trays, uiState.currentAssignment, uiState.settings.primaryLocationSpaceId)
 
     LazyColumn(modifier = modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp)) {
         items(uiState.spaces, key = { it.id }) { space ->
@@ -410,7 +471,12 @@ private fun TraySplitBody(
                 onCycleItemSize = { trayId, snackTypeId -> onEvent(TraySplitEvent.CycleItemSize(trayId, snackTypeId)) },
                 onRemoveItem = { trayId, snackTypeId -> onEvent(TraySplitEvent.RemoveItemFromTray(trayId, snackTypeId)) },
                 onLongPressPin = { onEvent(TraySplitEvent.ShowPinSheet(it)) },
-                onTapRoundBadge = { onEvent(TraySplitEvent.ShowRoundPicker(it)) }
+                onTapRoundBadge = { onEvent(TraySplitEvent.ShowRoundPicker(it)) },
+                onTogglePrimaryLocation = {
+                    onEvent(TraySplitEvent.SetPrimaryLocation(if (space.isPrimaryLocation) null else space.id))
+                },
+                onRenameSpace = { onEvent(TraySplitEvent.ShowRenameSpaceDialog(space.id)) },
+                needsMoveIds = needsMoveIds
             )
         }
     }
@@ -430,7 +496,7 @@ private fun TraySplitBottomBar(
             verticalAlignment = Alignment.CenterVertically
         ) {
             BottomActionButton(
-                text = "초기화",
+                text = stringResource(R.string.tray_reset),
                 icon = Icons.Default.RestartAlt,
                 bgColor = Color(0xFFEEEEEE),
                 textColor = Color(0xFF888888),
@@ -438,7 +504,7 @@ private fun TraySplitBottomBar(
             )
             Spacer(Modifier.weight(1f))
             BottomActionButton(
-                text = "배분 실행",
+                text = stringResource(R.string.tray_run_allocation),
                 icon = Icons.Default.Casino,
                 bgColor = Color(0xFFB3D9FF),
                 textColor = Color(0xFF2D6FA8),
@@ -446,7 +512,7 @@ private fun TraySplitBottomBar(
                 onClick = { onEvent(TraySplitEvent.RunAllocation) }
             )
             BottomActionButton(
-                text = "확정",
+                text = stringResource(R.string.tray_confirm),
                 icon = Icons.Default.Save,
                 bgColor = Color(0xFFFF9BB5),
                 textColor = Color.White,

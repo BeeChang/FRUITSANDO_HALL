@@ -12,6 +12,7 @@ import example.yf.fruit_hall.data.tray.entity.SpaceEntity
 import example.yf.fruit_hall.data.tray.entity.TrayEntity
 import example.yf.fruit_hall.data.tray.entity.TrayItemEntity
 import example.yf.fruit_hall.domain.tray.AllocateTraysUseCase
+import example.yf.fruit_hall.ui.traysplit.component.labelCandidates
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -66,8 +67,14 @@ class TraySplitViewModel @Inject constructor(
 
                 _uiState.update { current ->
                     current.copy(
-                        spaces = snapshot.spaces.map { SpaceUi(it.id, it.name) },
-                        snackTypes = snapshot.snackTypes.map { SnackTypeUi(it.id, it.name, it.colorHex, it.secondaryColorHex) },
+                        spaces = snapshot.spaces.map {
+                            SpaceUi(
+                                it.id, it.name,
+                                isPrimaryLocation = it.id == snapshot.settings.primaryLocationSpaceId,
+                                capacity = it.capacity
+                            )
+                        },
+                        snackTypes = snapshot.snackTypes.map { SnackTypeUi(it.id, it.name, it.colorHex, it.secondaryColorHex, it.isActive) },
                         trays = snapshot.trays.map { tray ->
                             TrayUi(
                                 id = tray.id,
@@ -100,10 +107,15 @@ class TraySplitViewModel @Inject constructor(
             is TraySplitEvent.DeleteSpace -> deleteSpace(event.id)
             TraySplitEvent.ShowSpaceDialog -> _uiState.update { it.copy(showSpaceDialog = true) }
             TraySplitEvent.HideSpaceDialog -> _uiState.update { it.copy(showSpaceDialog = false) }
+            is TraySplitEvent.ShowRenameSpaceDialog -> _uiState.update { it.copy(renameSpaceTargetId = event.id) }
+            TraySplitEvent.HideRenameSpaceDialog -> _uiState.update { it.copy(renameSpaceTargetId = null) }
+            is TraySplitEvent.RenameSpace -> renameSpace(event.id, event.name, event.capacity)
+            is TraySplitEvent.SetPrimaryLocation -> setPrimaryLocation(event.spaceId)
 
             is TraySplitEvent.AddSnackType -> addSnackType(event.name, event.colorHex, event.secondaryColorHex)
             is TraySplitEvent.DeleteSnackType -> deleteSnackType(event.id)
             is TraySplitEvent.ReorderSnackTypes -> reorderSnackTypes(event.orderedIds)
+            is TraySplitEvent.SetSnackTypeActive -> setSnackTypeActive(event.id, event.isActive)
             TraySplitEvent.ShowSnackTypeDialog -> _uiState.update { it.copy(showSnackTypeDialog = true) }
             TraySplitEvent.HideSnackTypeDialog -> _uiState.update { it.copy(showSnackTypeDialog = false) }
 
@@ -114,7 +126,7 @@ class TraySplitViewModel @Inject constructor(
             is TraySplitEvent.RemoveItemFromTray -> removeItem(event.trayId, event.snackTypeId)
             is TraySplitEvent.ShowAddTrayDialog -> _uiState.update { it.copy(addTrayTargetSpaceId = event.spaceId) }
             TraySplitEvent.HideAddTrayDialog -> _uiState.update { it.copy(addTrayTargetSpaceId = null) }
-            is TraySplitEvent.SubmitAddTrayDialog -> submitAddTray(event.spaceId, event.items)
+            is TraySplitEvent.SubmitAddTrayDialog -> submitAddTray(event.spaceId, event.snackTypeIds)
 
             is TraySplitEvent.ShowPinSheet -> _uiState.update { it.copy(pinSheetTrayId = event.trayId) }
             TraySplitEvent.HidePinSheet -> _uiState.update { it.copy(pinSheetTrayId = null) }
@@ -155,6 +167,21 @@ class TraySplitViewModel @Inject constructor(
         viewModelScope.launch { repository.deleteSpace(space) }
     }
 
+    private fun renameSpace(id: Long, name: String, capacity: Int?) {
+        if (name.isBlank()) return
+        viewModelScope.launch {
+            repository.renameSpace(id, name.trim())
+            repository.setSpaceCapacity(id, capacity)
+            _uiState.update { it.copy(renameSpaceTargetId = null) }
+        }
+    }
+
+    private fun setPrimaryLocation(spaceId: Long?) {
+        viewModelScope.launch {
+            repository.updateSettings(cachedSettings.copy(primaryLocationSpaceId = spaceId))
+        }
+    }
+
     private fun addSnackType(name: String, colorHex: String, secondaryColorHex: String?) {
         if (name.isBlank()) return
         viewModelScope.launch {
@@ -171,6 +198,10 @@ class TraySplitViewModel @Inject constructor(
         viewModelScope.launch { repository.reorderSnackTypes(orderedIds) }
     }
 
+    private fun setSnackTypeActive(id: Long, isActive: Boolean) {
+        viewModelScope.launch { repository.setSnackTypeActive(id, isActive) }
+    }
+
     private fun quickAddTray(spaceId: Long) {
         viewModelScope.launch { repository.addTray(spaceId, cachedTrays.count { it.spaceId == spaceId }) }
     }
@@ -183,7 +214,7 @@ class TraySplitViewModel @Inject constructor(
         }
     }
 
-    private fun addItemToTray(trayId: Long, snackTypeId: Long, roughSize: RoughSize) {
+    private fun addItemToTray(trayId: Long, snackTypeId: Long, roughSize: RoughSize?) {
         // 드래그 드롭 좌표가 낡아 이미 삭제된 trayId를 가리킬 수 있다 — FK 제약 크래시 방지용 가드
         if (cachedTrays.none { it.id == trayId } || cachedSnackTypes.none { it.id == snackTypeId }) return
         viewModelScope.launch { repository.addItemToTray(trayId, snackTypeId, roughSize) }
@@ -191,8 +222,9 @@ class TraySplitViewModel @Inject constructor(
 
     private fun cycleItemSize(trayId: Long, snackTypeId: Long) {
         val current = cachedTrayItems.find { it.trayId == trayId && it.snackTypeId == snackTypeId } ?: return
-        val currentSize = current.roughSize?.let { RoughSize.valueOf(it) } ?: RoughSize.M
+        val currentSize = current.roughSize?.let { RoughSize.valueOf(it) }
         val next = when (currentSize) {
+            null -> RoughSize.S
             RoughSize.S -> RoughSize.M
             RoughSize.M -> RoughSize.L
             RoughSize.L -> RoughSize.S
@@ -204,10 +236,10 @@ class TraySplitViewModel @Inject constructor(
         viewModelScope.launch { repository.removeItemFromTray(trayId, snackTypeId) }
     }
 
-    private fun submitAddTray(spaceId: Long, items: List<Pair<Long, RoughSize>>) {
+    private fun submitAddTray(spaceId: Long, snackTypeIds: List<Long>) {
         viewModelScope.launch {
             val trayId = repository.addTray(spaceId, cachedTrays.count { it.spaceId == spaceId })
-            items.forEach { (snackTypeId, size) -> repository.addItemToTray(trayId, snackTypeId, size) }
+            snackTypeIds.forEach { snackTypeId -> repository.addItemToTray(trayId, snackTypeId, roughSize = null) }
             _uiState.update { it.copy(addTrayTargetSpaceId = null) }
         }
     }
@@ -233,12 +265,12 @@ class TraySplitViewModel @Inject constructor(
             _uiState.update { it.copy(isAllocating = true, attemptCount = 0) }
             var attempts = 0
             val engineTrays = repository.buildEngineTrays(trays, cachedTrayItems)
-            val config = repository.buildAllocationConfig(cachedSettings)
+            val config = repository.buildAllocationConfig(cachedSettings, cachedSpaces)
             val candidates = try {
                 allocateTrays(engineTrays, config) { attempts++ }
             } catch (e: IllegalArgumentException) {
                 _uiState.update {
-                    it.copy(isAllocating = false, snackbarMessage = "배분 설정을 확인해주세요: ${e.message}")
+                    it.copy(isAllocating = false, snackbarMessage = TraySplitMessage.AllocationSettingsError(e.message.orEmpty()))
                 }
                 return@launch
             }
@@ -247,6 +279,7 @@ class TraySplitViewModel @Inject constructor(
                     isAllocating = false,
                     attemptCount = attempts,
                     candidates = candidates,
+                    candidateLabels = labelCandidates(candidates, primaryLocationSet = cachedSettings.primaryLocationSpaceId != null),
                     selectedCandidateIndex = null,
                     showResultDialog = true
                 )
@@ -291,8 +324,9 @@ class TraySplitViewModel @Inject constructor(
                     currentAssignment = emptyMap(),
                     roundSizes = emptyList(),
                     candidates = emptyList(),
+                    candidateLabels = emptyList(),
                     selectedCandidateIndex = null,
-                    snackbarMessage = "초기화되었습니다"
+                    snackbarMessage = TraySplitMessage.ResetDone
                 )
             }
         }
@@ -305,35 +339,34 @@ class TraySplitViewModel @Inject constructor(
             val today = LocalDate.now().toString()
             val score = state.selectedCandidateIndex?.let { state.candidates.getOrNull(it)?.score } ?: 0
             repository.confirmAllocation(today, state.currentAssignment, state.roundSizes, score)
-            _uiState.update { it.copy(snackbarMessage = "저장되었습니다") }
+            _uiState.update { it.copy(snackbarMessage = TraySplitMessage.SaveDone) }
         }
     }
 
     private fun AllocationSettingsEntity.toUi() = AllocationSettingsUi(
         rounds = rounds,
-        isExactMode = capacityModeType == "EXACT",
-        exactTraysPerRound = exactTraysPerRoundCsv.split(",").let { tokens ->
-            List(rounds) { i -> tokens.getOrNull(i)?.trim()?.toIntOrNull() }
-        },
-        ratioPercents = ratioPercentsCsv.split(",").mapNotNull { it.trim().toDoubleOrNull() }
-            .let { if (it.size == rounds) it else List(rounds) { 100.0 / rounds } },
-        maxDeviation = maxDeviation,
+        capacity = TrayRepository.parseCapacityCsv(capacityCsv, rounds),
+        flexDeviation = flexDeviation,
         allowedMissingTypes = allowedMissingTypes,
+        primaryLocationSpaceId = primaryLocationSpaceId,
+        topN = topN,
+        ilsIterations = ilsIterations,
         spreadStrength = runCatching { Level.valueOf(spreadStrength) }.getOrDefault(Level.MID),
         orderStrictness = runCatching { Level.valueOf(orderStrictness) }.getOrDefault(Level.MID),
-        qtySensitivity = runCatching { Level.valueOf(qtySensitivity) }.getOrDefault(Level.MID)
+        moveAversion = runCatching { Level.valueOf(moveAversion) }.getOrDefault(Level.MID)
     )
 
     private fun AllocationSettingsUi.toEntity() = AllocationSettingsEntity(
         id = 1,
         rounds = rounds,
-        capacityModeType = if (isExactMode) "EXACT" else "RATIO",
-        exactTraysPerRoundCsv = TrayRepository.exactCsv(exactTraysPerRound),
-        ratioPercentsCsv = TrayRepository.ratioCsv(ratioPercents),
-        maxDeviation = maxDeviation,
+        capacityCsv = TrayRepository.capacityCsv(capacity),
+        flexDeviation = flexDeviation,
         allowedMissingTypes = allowedMissingTypes,
+        primaryLocationSpaceId = primaryLocationSpaceId,
+        topN = topN,
+        ilsIterations = ilsIterations,
         spreadStrength = spreadStrength.name,
         orderStrictness = orderStrictness.name,
-        qtySensitivity = qtySensitivity.name
+        moveAversion = moveAversion.name
     )
 }
