@@ -9,5 +9,6 @@ data class MemberEntity(
     val name: String,
     val isWorking: Boolean = false,
     val sortOrder: Int = 0,
-    val colorHex: String = "#4D96FF"
+    val colorHex: String = "#4D96FF",
+    val isDeleted: Boolean = false
 )

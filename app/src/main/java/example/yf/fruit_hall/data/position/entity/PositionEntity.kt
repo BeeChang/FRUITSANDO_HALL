@@ -13,5 +13,6 @@ data class PositionEntity(
     val hasWeight: Boolean = false,
     val weightStrength: Float = 0.8f,
     val weightDecayMode: String = WeightDecayMode.STAY_LOW.name,
-    val sortOrder: Int = 0
+    val sortOrder: Int = 0,
+    val isDeleted: Boolean = false
 )

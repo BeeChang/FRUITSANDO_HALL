@@ -1,7 +1,6 @@
 package example.yf.fruit_hall.data.position.dao
 
 import androidx.room.Dao
-import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy.Companion.REPLACE
 import androidx.room.Query
@@ -21,8 +20,8 @@ interface PositionDao {
     @Update
     suspend fun update(position: PositionEntity)
 
-    @Delete
-    suspend fun delete(position: PositionEntity)
+    @Query("UPDATE positions SET isDeleted = 1 WHERE id = :id")
+    suspend fun softDelete(id: Long)
 
     @Query("SELECT COUNT(*) FROM positions")
     suspend fun count(): Int

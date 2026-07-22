@@ -90,12 +90,12 @@ class PositionRepository @Inject constructor(
 
     suspend fun addMember(member: MemberEntity) = memberDao.insert(member)
     suspend fun updateMember(member: MemberEntity) = memberDao.update(member)
-    suspend fun deleteMember(member: MemberEntity) = memberDao.delete(member)
+    suspend fun deleteMember(id: Long) = memberDao.softDelete(id)
     suspend fun setMemberWorking(id: Long, isWorking: Boolean) = memberDao.setWorking(id, isWorking)
 
     suspend fun addPosition(position: PositionEntity) = positionDao.insert(position)
     suspend fun updatePosition(position: PositionEntity) = positionDao.update(position)
-    suspend fun deletePosition(position: PositionEntity) = positionDao.delete(position)
+    suspend fun deletePosition(id: Long) = positionDao.softDelete(id)
     suspend fun positionCount(): Int = positionDao.count()
 
     suspend fun updateSlotSettings(totalSlots: Int) =

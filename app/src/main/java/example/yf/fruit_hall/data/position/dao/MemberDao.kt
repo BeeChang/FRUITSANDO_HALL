@@ -1,7 +1,6 @@
 package example.yf.fruit_hall.data.position.dao
 
 import androidx.room.Dao
-import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy.Companion.REPLACE
 import androidx.room.Query
@@ -21,8 +20,8 @@ interface MemberDao {
     @Update
     suspend fun update(member: MemberEntity)
 
-    @Delete
-    suspend fun delete(member: MemberEntity)
+    @Query("UPDATE members SET isDeleted = 1, isWorking = 0 WHERE id = :id")
+    suspend fun softDelete(id: Long)
 
     @Query("UPDATE members SET isWorking = :isWorking WHERE id = :id")
     suspend fun setWorking(id: Long, isWorking: Boolean)

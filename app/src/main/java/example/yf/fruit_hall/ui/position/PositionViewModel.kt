@@ -27,6 +27,10 @@ class PositionViewModel @Inject constructor(
     private var cachedMembers: List<MemberEntity> = emptyList()
     private var cachedPositions: List<PositionEntity> = emptyList()
 
+    // 삭제된(isDeleted) 멤버/포지션까지 포함한 전체 목록. 과거 배정 기록에서 이름을 표시할 때만 쓴다.
+    private var cachedAllMembers: List<MemberEntity> = emptyList()
+    private var cachedAllPositions: List<PositionEntity> = emptyList()
+
     init {
         viewModelScope.launch {
             combine(
@@ -36,20 +40,25 @@ class PositionViewModel @Inject constructor(
             ) { members, positions, settings ->
                 Triple(members, positions, settings)
             }.collect { (members, positions, settings) ->
-                cachedMembers = members
-                cachedPositions = positions
+                cachedAllMembers = members
+                cachedAllPositions = positions
+                val activeMembers = members.filter { !it.isDeleted }
+                val activePositions = positions.filter { !it.isDeleted }
+                cachedMembers = activeMembers
+                cachedPositions = activePositions
 
                 val today = LocalDate.now().toString()
                 val workDay = repository.getOrCreateToday()
                 val todayAssignments = repository.getTodayAssignments(today)
 
                 val memberWeights = repository.computeWeightsForDisplay(
-                    members, positions, todayAssignments
+                    activeMembers, activePositions, todayAssignments
                 )
+                // 삭제된 멤버/포지션의 이름도 보여야 하므로 전체(members/positions) 기준으로 조인
                 val history = buildHistory(todayAssignments, members, positions)
 
                 _uiState.update { current ->
-                    val newPositionIds = positions.map { it.id }.toSet()
+                    val newPositionIds = activePositions.map { it.id }.toSet()
                     val prevPositionIds = current.positions.map { it.id }.toSet()
                     val updatedEnabled = when {
                         // 첫 로드: 전체 활성화
@@ -62,8 +71,8 @@ class PositionViewModel @Inject constructor(
                         }
                     }
                     current.copy(
-                        members = members.map { it.toUi() },
-                        positions = positions.map { it.toUi() },
+                        members = activeMembers.map { it.toUi() },
+                        positions = activePositions.map { it.toUi() },
                         enabledPositionIds = updatedEnabled,
                         totalSlots = settings.totalSlots,
                         currentSlot = workDay.currentSlot,
@@ -188,7 +197,7 @@ class PositionViewModel @Inject constructor(
             repository.confirmAssignments(today, state.currentSlot, assignments)
 
             val todayAssignments = repository.getTodayAssignments(today)
-            val history = buildHistory(todayAssignments, cachedMembers, cachedPositions)
+            val history = buildHistory(todayAssignments, cachedAllMembers, cachedAllPositions)
 
             _uiState.update {
                 it.copy(isConfirmedSlot = true, todayHistory = history)
@@ -208,8 +217,8 @@ class PositionViewModel @Inject constructor(
             if (slotAssignments.isNotEmpty()) {
                 val resultItems = buildDrawResult(
                     pairs = slotAssignments.map { it.memberId to it.positionId },
-                    members = cachedMembers,
-                    positions = cachedPositions
+                    members = cachedAllMembers,
+                    positions = cachedAllPositions
                 )
                 _uiState.update {
                     it.copy(
@@ -285,8 +294,8 @@ class PositionViewModel @Inject constructor(
     }
 
     private fun deleteMember(id: Long) {
-        val member = cachedMembers.find { it.id == id } ?: return
-        viewModelScope.launch { repository.deleteMember(member) }
+        cachedMembers.find { it.id == id } ?: return
+        viewModelScope.launch { repository.deleteMember(id) }
     }
 
     private fun addPosition(name: String, isMultiPerson: Boolean) {
@@ -314,9 +323,9 @@ class PositionViewModel @Inject constructor(
     }
 
     private fun deletePosition(id: Long) {
-        val position = cachedPositions.find { it.id == id } ?: return
+        cachedPositions.find { it.id == id } ?: return
         viewModelScope.launch {
-            repository.deletePosition(position)
+            repository.deletePosition(id)
             _uiState.update {
                 it.copy(isDrawDone = false, drawResult = emptyList(), isConfirmedSlot = false)
             }
@@ -366,13 +375,16 @@ class PositionViewModel @Inject constructor(
                     slotNumber = slot,
                     assignments = slotAssignments.map { a ->
                         SlotAssignmentUi(
-                            memberName = memberMap[a.memberId]?.name ?: "?",
-                            positionName = positionMap[a.positionId]?.name ?: "?"
+                            memberName = memberMap[a.memberId]?.displayName() ?: "(삭제된 인원)",
+                            positionName = positionMap[a.positionId]?.displayName() ?: "(삭제된 포지션)"
                         )
                     }
                 )
             }
     }
+
+    private fun MemberEntity.displayName() = if (isDeleted) "$name (삭제됨)" else name
+    private fun PositionEntity.displayName() = if (isDeleted) "$name (삭제됨)" else name
 
     private fun MemberEntity.toUi() = MemberUi(
         id = id,

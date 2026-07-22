@@ -57,6 +57,15 @@ object PositionDatabaseModule {
         }
     }
 
+    // 멤버/포지션 삭제를 하드 삭제 대신 소프트 삭제로 전환 — 과거 배정 기록이 FK CASCADE로
+    // 함께 지워지지 않도록 isDeleted 플래그 추가. 기존 행은 전부 삭제 안 된 상태(0)로 시작.
+    private val MIGRATION_3_4 = object : Migration(3, 4) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE members ADD COLUMN isDeleted INTEGER NOT NULL DEFAULT 0")
+            db.execSQL("ALTER TABLE positions ADD COLUMN isDeleted INTEGER NOT NULL DEFAULT 0")
+        }
+    }
+
     @Provides
     @Singleton
     fun providePositionDatabase(@ApplicationContext context: Context): PositionDatabase {
@@ -64,7 +73,7 @@ object PositionDatabaseModule {
             context,
             PositionDatabase::class.java,
             "position_database"
-        ).addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+        ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
          .addCallback(object : RoomDatabase.Callback() {
             override fun onCreate(db: SupportSQLiteDatabase) {
                 super.onCreate(db)
