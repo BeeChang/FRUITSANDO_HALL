@@ -70,6 +70,7 @@ class PositionViewModel @Inject constructor(
                             kept + added
                         }
                     }
+                    val isViewingToday = current.historyViewDate.isEmpty() || current.historyViewDate == today
                     current.copy(
                         members = activeMembers.map { it.toUi() },
                         positions = activePositions.map { it.toUi() },
@@ -78,7 +79,8 @@ class PositionViewModel @Inject constructor(
                         currentSlot = workDay.currentSlot,
                         memberWeights = memberWeights,
                         todayHistory = history,
-                        todayDate = today
+                        todayDate = today,
+                        historyForViewDate = if (isViewingToday) history else current.historyForViewDate
                     )
                 }
             }
@@ -118,8 +120,38 @@ class PositionViewModel @Inject constructor(
             is PositionEvent.HideWeightDialog -> _uiState.update { it.copy(showWeightDialog = false) }
             is PositionEvent.ShowSlotDialog -> _uiState.update { it.copy(showSlotDialog = true) }
             is PositionEvent.HideSlotDialog -> _uiState.update { it.copy(showSlotDialog = false) }
-            is PositionEvent.ShowHistoryDialog -> _uiState.update { it.copy(showHistoryDialog = true) }
-            is PositionEvent.HideHistoryDialog -> _uiState.update { it.copy(showHistoryDialog = false) }
+            is PositionEvent.ShowHistoryDialog -> showHistoryDialog()
+            is PositionEvent.HideHistoryDialog -> _uiState.update {
+                it.copy(showHistoryDialog = false, showHistoryDatePicker = false)
+            }
+            is PositionEvent.ShowHistoryDatePicker -> _uiState.update { it.copy(showHistoryDatePicker = true) }
+            is PositionEvent.HideHistoryDatePicker -> _uiState.update { it.copy(showHistoryDatePicker = false) }
+            is PositionEvent.SelectHistoryDate -> selectHistoryDate(event.date)
+        }
+    }
+
+    private fun showHistoryDialog() {
+        val state = _uiState.value
+        _uiState.update {
+            it.copy(
+                showHistoryDialog = true,
+                historyViewDate = state.todayDate,
+                historyForViewDate = state.todayHistory
+            )
+        }
+        viewModelScope.launch {
+            val dates = repository.getHistoryDates().toSet()
+            _uiState.update { it.copy(historyAvailableDates = dates) }
+        }
+    }
+
+    private fun selectHistoryDate(date: String) {
+        viewModelScope.launch {
+            val assignments = repository.getTodayAssignments(date)
+            val history = buildHistory(assignments, cachedAllMembers, cachedAllPositions)
+            _uiState.update {
+                it.copy(historyViewDate = date, historyForViewDate = history, showHistoryDatePicker = false)
+            }
         }
     }
 

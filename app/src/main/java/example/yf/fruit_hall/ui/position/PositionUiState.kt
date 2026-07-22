@@ -16,7 +16,11 @@ data class PositionUiState(
     val showWeightDialog: Boolean = false,
     val showSlotDialog: Boolean = false,
     val showHistoryDialog: Boolean = false,
-    val todayDate: String = ""
+    val todayDate: String = "",
+    val historyViewDate: String = "",
+    val historyForViewDate: List<SlotHistoryUi> = emptyList(),
+    val historyAvailableDates: Set<String> = emptySet(),
+    val showHistoryDatePicker: Boolean = false
 )
 
 data class MemberUi(
@@ -97,4 +101,7 @@ sealed interface PositionEvent {
     data object HideSlotDialog : PositionEvent
     data object ShowHistoryDialog : PositionEvent
     data object HideHistoryDialog : PositionEvent
+    data object ShowHistoryDatePicker : PositionEvent
+    data object HideHistoryDatePicker : PositionEvent
+    data class SelectHistoryDate(val date: String) : PositionEvent
 }

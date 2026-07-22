@@ -244,7 +244,14 @@ fun PositionScreen(
 
     if (uiState.showHistoryDialog) {
         HistoryDialog(
-            history = uiState.todayHistory,
+            history = uiState.historyForViewDate,
+            viewDate = uiState.historyViewDate,
+            todayDate = uiState.todayDate,
+            availableDates = uiState.historyAvailableDates,
+            showDatePicker = uiState.showHistoryDatePicker,
+            onOpenDatePicker = { viewModel.onEvent(PositionEvent.ShowHistoryDatePicker) },
+            onCloseDatePicker = { viewModel.onEvent(PositionEvent.HideHistoryDatePicker) },
+            onSelectDate = { date -> viewModel.onEvent(PositionEvent.SelectHistoryDate(date)) },
             onResetToday = { viewModel.onEvent(PositionEvent.ResetToday) },
             onResetAll = { viewModel.onEvent(PositionEvent.ResetAll) },
             onDismiss = { viewModel.onEvent(PositionEvent.HideHistoryDialog) }

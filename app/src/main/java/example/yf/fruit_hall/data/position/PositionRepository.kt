@@ -46,6 +46,8 @@ class PositionRepository @Inject constructor(
     suspend fun getTodayAssignments(date: String): List<AssignmentEntity> =
         assignmentDao.getByDate(date)
 
+    suspend fun getHistoryDates(): List<String> = assignmentDao.getDistinctDates()
+
     suspend fun getSlotAssignments(date: String, slot: Int): List<AssignmentEntity> =
         assignmentDao.getByDateAndSlot(date, slot)
 

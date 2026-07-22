@@ -28,4 +28,7 @@ interface AssignmentDao {
 
     @Query("SELECT * FROM assignments ORDER BY date DESC, slotNumber DESC")
     suspend fun getAll(): List<AssignmentEntity>
+
+    @Query("SELECT DISTINCT date FROM assignments ORDER BY date DESC")
+    suspend fun getDistinctDates(): List<String>
 }

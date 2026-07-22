@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
@@ -26,12 +27,17 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -47,10 +53,24 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import example.yf.fruit_hall.ui.position.SlotHistoryUi
 import example.yf.fruit_hall.ui.theme.AppTheme
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 
+private val historyDateFmt = DateTimeFormatter.ofPattern("yyyy년 M월 d일")
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HistoryDialog(
     history: List<SlotHistoryUi>,
+    viewDate: String,
+    todayDate: String,
+    availableDates: Set<String>,
+    showDatePicker: Boolean,
+    onOpenDatePicker: () -> Unit,
+    onCloseDatePicker: () -> Unit,
+    onSelectDate: (String) -> Unit,
     onResetToday: () -> Unit,
     onResetAll: () -> Unit,
     onDismiss: () -> Unit
@@ -58,6 +78,10 @@ fun HistoryDialog(
     val appColors = AppTheme.colors
     var showDayResetConfirm by remember { mutableStateOf(false) }
     var showFullResetConfirm by remember { mutableStateOf(false) }
+    val isViewingToday = viewDate.isEmpty() || viewDate == todayDate
+    val viewDateLabel = remember(viewDate) {
+        runCatching { LocalDate.parse(viewDate).format(historyDateFmt) }.getOrDefault(viewDate)
+    }
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -86,11 +110,19 @@ fun HistoryDialog(
                     )
                     Spacer(Modifier.width(10.dp))
                     Text(
-                        text = "오늘 배정 기록",
+                        text = if (isViewingToday) "오늘 배정 기록" else "$viewDateLabel 배정 기록",
                         style = MaterialTheme.typography.titleMedium,
                         color = appColors.white,
                         modifier = Modifier.weight(1f)
                     )
+                    IconButton(onClick = onOpenDatePicker, enabled = availableDates.isNotEmpty()) {
+                        Icon(
+                            imageVector = Icons.Default.CalendarMonth,
+                            contentDescription = "날짜 선택",
+                            tint = if (availableDates.isNotEmpty()) appColors.grey300 else appColors.grey600,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
                     IconButton(onClick = onDismiss) {
                         Icon(
                             imageVector = Icons.Default.Close,
@@ -117,7 +149,7 @@ fun HistoryDialog(
                             )
                             Spacer(Modifier.height(14.dp))
                             Text(
-                                text = "오늘 배정 기록이 없습니다",
+                                text = if (isViewingToday) "오늘 배정 기록이 없습니다" else "이 날짜엔 배정 기록이 없습니다",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = appColors.grey400
                             )
@@ -146,13 +178,15 @@ fun HistoryDialog(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    TextButton(
-                        onClick = { showDayResetConfirm = true },
-                        colors = ButtonDefaults.textButtonColors(contentColor = appColors.crimson500)
-                    ) {
-                        Icon(Icons.Default.Refresh, null, modifier = Modifier.size(15.dp))
-                        Spacer(Modifier.width(4.dp))
-                        Text("오늘 초기화", style = MaterialTheme.typography.labelMedium)
+                    if (isViewingToday) {
+                        TextButton(
+                            onClick = { showDayResetConfirm = true },
+                            colors = ButtonDefaults.textButtonColors(contentColor = appColors.crimson500)
+                        ) {
+                            Icon(Icons.Default.Refresh, null, modifier = Modifier.size(15.dp))
+                            Spacer(Modifier.width(4.dp))
+                            Text("오늘 초기화", style = MaterialTheme.typography.labelMedium)
+                        }
                     }
                     TextButton(
                         onClick = { showFullResetConfirm = true },
@@ -210,6 +244,45 @@ fun HistoryDialog(
                 TextButton(onClick = { showFullResetConfirm = false }) { Text("취소") }
             }
         )
+    }
+
+    if (showDatePicker) {
+        val availableEpochDays = remember(availableDates) {
+            availableDates.mapNotNull { runCatching { LocalDate.parse(it).toEpochDay() }.getOrNull() }.toSet()
+        }
+        val initialMillis = remember(viewDate) {
+            runCatching {
+                LocalDate.parse(viewDate).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
+            }.getOrNull()
+        }
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = initialMillis,
+            selectableDates = object : SelectableDates {
+                override fun isSelectableDate(utcTimeMillis: Long): Boolean {
+                    val epochDay = Instant.ofEpochMilli(utcTimeMillis).atZone(ZoneOffset.UTC).toLocalDate().toEpochDay()
+                    return epochDay in availableEpochDays
+                }
+            }
+        )
+        DatePickerDialog(
+            onDismissRequest = onCloseDatePicker,
+            confirmButton = {
+                TextButton(onClick = {
+                    val millis = datePickerState.selectedDateMillis
+                    if (millis != null) {
+                        val date = Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate().toString()
+                        onSelectDate(date)
+                    } else {
+                        onCloseDatePicker()
+                    }
+                }) { Text("확인") }
+            },
+            dismissButton = {
+                TextButton(onClick = onCloseDatePicker) { Text("취소") }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
     }
 }
 
