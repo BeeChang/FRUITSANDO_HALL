@@ -24,6 +24,7 @@ import androidx.compose.material.icons.automirrored.filled.FactCheck
 import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.WarningAmber
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -59,6 +60,7 @@ fun RoundSummaryDialog(
     needsMoveIds: Set<Long> = emptySet(),
     missingItems: List<SnackTypeUi> = emptyList(),
     onSelectCandidate: (() -> Unit)? = null,
+    onSendDiscord: (() -> Unit)? = null,
     onDismiss: () -> Unit
 ) {
     val appColors = AppTheme.colors
@@ -312,6 +314,25 @@ fun RoundSummaryDialog(
                             shape = RoundedCornerShape(12.dp)
                         ) {
                             Text(stringResource(R.string.tray_summary_select_candidate))
+                        }
+                    } else if (onSendDiscord != null) {
+                        Button(
+                            onClick = onDismiss,
+                            modifier = Modifier.weight(0.7f),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = appColors.grey300,
+                                contentColor = appColors.grey900
+                            )
+                        ) {
+                            Text(stringResource(R.string.cd_close))
+                        }
+                        Button(
+                            onClick = onSendDiscord,
+                            modifier = Modifier.weight(0.3f),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text(stringResource(R.string.tray_summary_send_discord))
                         }
                     } else {
                         Button(

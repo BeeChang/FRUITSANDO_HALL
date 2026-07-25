@@ -4,6 +4,7 @@ import example.yf.fruit_hall.core.AllocationCandidate
 import example.yf.fruit_hall.core.Level
 import example.yf.fruit_hall.core.RoughSize
 import example.yf.fruit_hall.core.RoundCapacity
+import example.yf.fruit_hall.data.discord.DiscordWebhookTarget
 import example.yf.fruit_hall.ui.traysplit.component.CandidateLabel
 
 data class SpaceUi(
@@ -70,6 +71,16 @@ data class TraySplitUiState(
     val showResultDialog: Boolean = false,
     val candidateDetailIndex: Int? = null,
     val showOverallSummary: Boolean = false,
+    val showDiscordSendDialog: Boolean = false,
+    val isSendingDiscord: Boolean = false,
+    val discordExtraTextDefault: String = "",
+    val discordTitlePrefixDefault: String = "",
+    val discordTitleSuffixDefault: String = "",
+    val discordRoundTimesDefault: Map<Int, String> = emptyMap(),
+    val discordSendError: String? = null,
+    val discordWebhookTargets: List<DiscordWebhookTarget> = emptyList(),
+    val discordSelectedWebhookName: String = "",
+    val isLoadingDiscordWebhooks: Boolean = false,
 
     val showSpaceDialog: Boolean = false,
     val showSnackTypeDialog: Boolean = false,
@@ -85,6 +96,7 @@ sealed interface TraySplitMessage {
     data class AllocationSettingsError(val detail: String) : TraySplitMessage
     data object ResetDone : TraySplitMessage
     data object SaveDone : TraySplitMessage
+    data object DiscordSendDone : TraySplitMessage
 }
 
 sealed interface TraySplitEvent {
@@ -128,6 +140,17 @@ sealed interface TraySplitEvent {
     data object HideResultDialog : TraySplitEvent
     data object ShowOverallSummary : TraySplitEvent
     data object HideOverallSummary : TraySplitEvent
+    data object ShowDiscordSendDialog : TraySplitEvent
+    data object HideDiscordSendDialog : TraySplitEvent
+    data class SelectDiscordWebhook(val name: String) : TraySplitEvent
+    data class SendDiscordSummary(
+        val titleLine: String,
+        val titlePrefix: String,
+        val titleSuffix: String,
+        val roundTimes: Map<Int, String>,
+        val roundItemsText: Map<Int, String>,
+        val extraText: String
+    ) : TraySplitEvent
 
     data class ShowRoundPicker(val trayId: Long) : TraySplitEvent
     data object HideRoundPicker : TraySplitEvent

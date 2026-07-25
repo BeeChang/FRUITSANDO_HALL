@@ -29,6 +29,29 @@ fun missingActiveTypes(snackTypes: List<SnackTypeUi>, trays: List<TrayUi>, assig
     return snackTypes.filter { it.isActive && it.id !in round1TypeIds }
 }
 
+/** 차수별 실제 배정 품목을 콤마로 나열한 기본 문구 — 다이얼로그에서 차수별 품목 입력칸의 초기값으로 사용 */
+fun defaultRoundItemsText(summary: RoundSummary): String =
+    summary.items.joinToString(", ") { it.name }
+
+/** 차수별 총정리를 디스코드 전송용 텍스트로 조합: "7/23일(목) 산도 라인업 \n\n 1차(11시) : 품목, 품목 \n\n 2차(14시30분) : ..." */
+fun buildDiscordSummaryMessage(
+    dateText: String,
+    summaries: List<RoundSummary>,
+    roundTimes: Map<Int, String>,
+    roundItemsText: Map<Int, String>,
+    extraText: String
+): String {
+    val body = summaries.joinToString("\n\n") { summary ->
+        val time = roundTimes[summary.round].orEmpty().trim()
+        val header = if (time.isEmpty()) "${summary.round}차" else "${summary.round}차(${time})"
+        val items = roundItemsText[summary.round].orEmpty().trim().ifEmpty { "-" }
+        "$header : $items"
+    }
+    return listOf(dateText.trim(), body, extraText.trim())
+        .filter { it.isNotEmpty() }
+        .joinToString("\n\n")
+}
+
 fun buildRoundSummaries(trays: List<TrayUi>, assignment: Map<Long, Int>, rounds: Int): List<RoundSummary> {
     return (1..rounds).map { round ->
         val roundTrays = trays.filter { assignment[it.id] == round }

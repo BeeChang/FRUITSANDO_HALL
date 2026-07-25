@@ -167,6 +167,24 @@
     <string name="tray_summary_empty_tray">비어있음</string>
     <string name="tray_summary_violations_label">위반 사항</string>
     <string name="tray_summary_select_candidate">이 후보 선택</string>
+    <string name="tray_summary_send_discord">디스코드 전송</string>
+
+    <!-- Tray Split: Discord Send Dialog -->
+    <string name="tray_discord_dialog_title">디스코드로 전송</string>
+    <string name="tray_discord_date_label">제목 문구 (날짜는 기본값 내일, 탭해서 변경)</string>
+    <string name="tray_discord_title_prefix_placeholder">앞 문구</string>
+    <string name="tray_discord_title_suffix_placeholder">예: 산도 라인업</string>
+    <string name="tray_discord_round_time_section_label">차수별 시간·품목</string>
+    <string name="tray_discord_round_time_label">%1$d차 시간</string>
+    <string name="tray_discord_round_time_placeholder">예: 11시 또는 14시30분</string>
+    <string name="tray_discord_round_items_label">%1$d차 품목</string>
+    <string name="tray_discord_round_items_placeholder">품목을 콤마로 구분해 수정</string>
+    <string name="tray_discord_extra_text_label">추가 문구 (선택)</string>
+    <string name="tray_discord_preview_label">미리보기</string>
+    <string name="tray_discord_send_button">전송</string>
+    <string name="tray_discord_send_error">전송 실패: %1$s</string>
+    <string name="tray_discord_webhook_target_label">전송 대상</string>
+    <string name="tray_discord_webhook_target_empty">등록된 전송 대상이 없습니다</string>
 
     <!-- Tray Split: Snack Chip Palette -->
     <string name="tray_palette_item_label">품목</string>
@@ -211,4 +229,5 @@
     <string name="tray_snackbar_settings_error">배분 설정을 확인해주세요: %1$s</string>
     <string name="tray_snackbar_reset_done">초기화되었습니다</string>
     <string name="tray_snackbar_save_done">저장되었습니다</string>
+    <string name="tray_snackbar_discord_send_done">전송에 성공했습니다</string>
 </resources>

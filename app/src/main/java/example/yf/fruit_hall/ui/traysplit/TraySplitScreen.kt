@@ -63,6 +63,7 @@ import example.yf.fruit_hall.ui.traysplit.component.AddTrayDialog
 import example.yf.fruit_hall.ui.traysplit.component.AllocationResultDialog
 import example.yf.fruit_hall.ui.traysplit.component.AllocationSettingsDialog
 import example.yf.fruit_hall.ui.traysplit.component.CandidateLabel
+import example.yf.fruit_hall.ui.traysplit.component.DiscordSendDialog
 import example.yf.fruit_hall.ui.traysplit.component.HelpDialog
 import example.yf.fruit_hall.ui.traysplit.component.RenameSpaceDialog
 import example.yf.fruit_hall.ui.traysplit.component.RoundChoiceSheet
@@ -81,6 +82,7 @@ private fun TraySplitMessage.resolve(): String = when (this) {
     is TraySplitMessage.AllocationSettingsError -> stringResource(R.string.tray_snackbar_settings_error, detail)
     TraySplitMessage.ResetDone -> stringResource(R.string.tray_snackbar_reset_done)
     TraySplitMessage.SaveDone -> stringResource(R.string.tray_snackbar_save_done)
+    TraySplitMessage.DiscordSendDone -> stringResource(R.string.tray_snackbar_discord_send_done)
 }
 
 @Composable
@@ -209,7 +211,8 @@ fun TraySplitScreen(
 
         uiState.snackbarMessage?.let { message ->
             LaunchedEffect(message) {
-                delay(2000)
+                val durationMs = if (message is TraySplitMessage.DiscordSendDone) 4000L else 2000L
+                delay(durationMs)
                 onEvent(TraySplitEvent.ClearSnackbar)
             }
             Box(modifier = Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.BottomCenter) {
@@ -303,7 +306,28 @@ fun TraySplitScreen(
             summaries = buildRoundSummaries(uiState.trays, uiState.currentAssignment, uiState.settings.rounds),
             needsMoveIds = needsMoveTrayIds(uiState.trays, uiState.currentAssignment, uiState.settings.primaryLocationSpaceId),
             missingItems = missingActiveTypes(uiState.snackTypes, uiState.trays, uiState.currentAssignment),
+            onSendDiscord = { onEvent(TraySplitEvent.ShowDiscordSendDialog) },
             onDismiss = { onEvent(TraySplitEvent.HideOverallSummary) }
+        )
+    }
+
+    if (uiState.showDiscordSendDialog) {
+        DiscordSendDialog(
+            summaries = buildRoundSummaries(uiState.trays, uiState.currentAssignment, uiState.settings.rounds),
+            initialTitlePrefix = uiState.discordTitlePrefixDefault,
+            initialTitleSuffix = uiState.discordTitleSuffixDefault,
+            initialRoundTimes = uiState.discordRoundTimesDefault,
+            initialExtraText = uiState.discordExtraTextDefault,
+            webhookTargets = uiState.discordWebhookTargets,
+            selectedWebhookName = uiState.discordSelectedWebhookName,
+            isLoadingWebhookTargets = uiState.isLoadingDiscordWebhooks,
+            onSelectWebhook = { onEvent(TraySplitEvent.SelectDiscordWebhook(it)) },
+            isSending = uiState.isSendingDiscord,
+            errorMessage = uiState.discordSendError,
+            onSend = { titleLine, titlePrefix, titleSuffix, roundTimes, roundItemsText, extraText ->
+                onEvent(TraySplitEvent.SendDiscordSummary(titleLine, titlePrefix, titleSuffix, roundTimes, roundItemsText, extraText))
+            },
+            onDismiss = { onEvent(TraySplitEvent.HideDiscordSendDialog) }
         )
     }
 

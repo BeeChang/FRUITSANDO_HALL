@@ -5,7 +5,9 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import example.yf.fruit_hall.core.Level
 import example.yf.fruit_hall.core.RoughSize
+import example.yf.fruit_hall.data.discord.DiscordWebhookRepository
 import example.yf.fruit_hall.data.tray.TrayRepository
+import example.yf.fruit_hall.data.tray.TraySplitPreferenceRepository
 import example.yf.fruit_hall.data.tray.entity.AllocationSettingsEntity
 import example.yf.fruit_hall.data.tray.entity.SnackTypeEntity
 import example.yf.fruit_hall.data.tray.entity.SpaceEntity
@@ -33,10 +35,25 @@ private data class TraySplitSnapshot(
 @HiltViewModel
 class TraySplitViewModel @Inject constructor(
     private val repository: TrayRepository,
-    private val allocateTrays: AllocateTraysUseCase
+    private val allocateTrays: AllocateTraysUseCase,
+    private val discordWebhookRepository: DiscordWebhookRepository,
+    private val preferenceRepository: TraySplitPreferenceRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(TraySplitUiState())
+    private val _uiState = MutableStateFlow(
+        TraySplitUiState(
+            discordExtraTextDefault = preferenceRepository.lastDiscordExtraText,
+            discordTitlePrefixDefault = preferenceRepository.lastDiscordTitlePrefix,
+            discordTitleSuffixDefault = preferenceRepository.lastDiscordTitleSuffix,
+            discordRoundTimesDefault = preferenceRepository.lastDiscordRoundTimes,
+            discordWebhookTargets = preferenceRepository.cachedDiscordWebhookTargets,
+            discordSelectedWebhookName = preferenceRepository.cachedDiscordWebhookTargets.let { targets ->
+                targets.firstOrNull { it.name == preferenceRepository.lastDiscordWebhookName }?.name
+                    ?: targets.firstOrNull()?.name.orEmpty()
+            },
+            isLoadingDiscordWebhooks = preferenceRepository.cachedDiscordWebhookTargets.isEmpty()
+        )
+    )
     val uiState: StateFlow<TraySplitUiState> = _uiState.asStateFlow()
 
     private var cachedSpaces: List<SpaceEntity> = emptyList()
@@ -46,6 +63,7 @@ class TraySplitViewModel @Inject constructor(
     private var cachedSettings: AllocationSettingsEntity = AllocationSettingsEntity()
 
     init {
+        refreshDiscordWebhookTargets()
         viewModelScope.launch {
             combine(
                 repository.observeSpaces(),
@@ -143,6 +161,14 @@ class TraySplitViewModel @Inject constructor(
             TraySplitEvent.HideResultDialog -> _uiState.update { it.copy(showResultDialog = false) }
             TraySplitEvent.ShowOverallSummary -> _uiState.update { it.copy(showOverallSummary = true) }
             TraySplitEvent.HideOverallSummary -> _uiState.update { it.copy(showOverallSummary = false) }
+            TraySplitEvent.ShowDiscordSendDialog -> {
+                // 요약 다이얼로그 위에 전송 다이얼로그가 겹쳐 뜨지 않도록 요약은 잠시 닫아둠 (취소 시 HideDiscordSendDialog에서 복원)
+                _uiState.update { it.copy(showDiscordSendDialog = true, showOverallSummary = false, discordSendError = null) }
+                refreshDiscordWebhookTargets()
+            }
+            TraySplitEvent.HideDiscordSendDialog -> _uiState.update { it.copy(showDiscordSendDialog = false, showOverallSummary = true, discordSendError = null) }
+            is TraySplitEvent.SelectDiscordWebhook -> _uiState.update { it.copy(discordSelectedWebhookName = event.name) }
+            is TraySplitEvent.SendDiscordSummary -> sendDiscordSummary(event)
 
             is TraySplitEvent.ShowRoundPicker -> _uiState.update { it.copy(roundPickerTrayId = event.trayId) }
             TraySplitEvent.HideRoundPicker -> _uiState.update { it.copy(roundPickerTrayId = null) }
@@ -345,6 +371,69 @@ class TraySplitViewModel @Inject constructor(
             val score = state.selectedCandidateIndex?.let { state.candidates.getOrNull(it)?.score } ?: 0
             repository.confirmAllocation(today, state.currentAssignment, state.roundSizes, score)
             _uiState.update { it.copy(snackbarMessage = TraySplitMessage.SaveDone) }
+        }
+    }
+
+    // 다이얼로그를 열기 전에(화면 진입 시점) 미리 받아 캐시해두어, 실제로 다이얼로그를 열 때는 네트워크를 기다리지 않도록 함
+    private fun refreshDiscordWebhookTargets() {
+        viewModelScope.launch {
+            // fetchAndActivate()는 오프라인 등으로 실패하면 예외를 던지므로, 화면 진입만으로 앱이 죽지 않도록 방어
+            val targets = runCatching { discordWebhookRepository.fetchWebhookTargets() }.getOrNull()
+            if (targets.isNullOrEmpty()) {
+                _uiState.update { it.copy(isLoadingDiscordWebhooks = false) }
+                return@launch
+            }
+            preferenceRepository.cachedDiscordWebhookTargets = targets
+            _uiState.update { current ->
+                val keepCurrent = current.discordSelectedWebhookName
+                    .takeIf { name -> targets.any { it.name == name } }
+                val selectedName = keepCurrent
+                    ?: targets.firstOrNull { it.name == preferenceRepository.lastDiscordWebhookName }?.name
+                    ?: targets.first().name
+                current.copy(
+                    discordWebhookTargets = targets,
+                    discordSelectedWebhookName = selectedName,
+                    isLoadingDiscordWebhooks = false
+                )
+            }
+        }
+    }
+
+    private fun sendDiscordSummary(event: TraySplitEvent.SendDiscordSummary) {
+        val state = _uiState.value
+        // 전송 대상 미선택 시 다이얼로그에서 전송 버튼이 비활성화되므로 여기 도달하지 않음
+        val target = state.discordWebhookTargets.firstOrNull { it.name == state.discordSelectedWebhookName } ?: return
+        val summaries = buildRoundSummaries(state.trays, state.currentAssignment, state.settings.rounds)
+        val message = buildDiscordSummaryMessage(event.titleLine, summaries, event.roundTimes, event.roundItemsText, event.extraText)
+        viewModelScope.launch {
+            _uiState.update { it.copy(isSendingDiscord = true, discordSendError = null) }
+            val result = discordWebhookRepository.sendMessage(message, target.url)
+            result.onSuccess {
+                preferenceRepository.lastDiscordExtraText = event.extraText
+                preferenceRepository.lastDiscordTitlePrefix = event.titlePrefix
+                preferenceRepository.lastDiscordTitleSuffix = event.titleSuffix
+                preferenceRepository.lastDiscordRoundTimes = event.roundTimes
+                preferenceRepository.lastDiscordWebhookName = target.name
+            }
+            _uiState.update {
+                if (result.isSuccess) {
+                    it.copy(
+                        isSendingDiscord = false,
+                        showDiscordSendDialog = false,
+                        showOverallSummary = false,
+                        discordExtraTextDefault = event.extraText,
+                        discordTitlePrefixDefault = event.titlePrefix,
+                        discordTitleSuffixDefault = event.titleSuffix,
+                        discordRoundTimesDefault = event.roundTimes,
+                        snackbarMessage = TraySplitMessage.DiscordSendDone
+                    )
+                } else {
+                    it.copy(
+                        isSendingDiscord = false,
+                        discordSendError = result.exceptionOrNull()?.message.orEmpty()
+                    )
+                }
+            }
         }
     }
 
