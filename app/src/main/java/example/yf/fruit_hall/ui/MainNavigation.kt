@@ -10,4 +10,5 @@ sealed interface MainRoute {
     @Serializable data object Clock : MainRoute
     @Serializable data object Schedule : MainRoute
     @Serializable data object TraySplit : MainRoute
+    @Serializable data object Rotation : MainRoute
 }

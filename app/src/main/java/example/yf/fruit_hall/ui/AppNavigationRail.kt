@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.PointOfSale
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -90,6 +91,13 @@ private val railItems = listOf(
         icon = Icons.Default.Inventory2,
         isSelected = { it?.hasRoute<MainRoute.TraySplit>() ?: false },
     ),
+    RailItemData(
+        route = MainRoute.Rotation,
+        labelRes = R.string.nav_rotation,
+        cdRes = R.string.cd_nav_rotation,
+        icon = Icons.Default.SwapHoriz,
+        isSelected = { it?.hasRoute<MainRoute.Rotation>() ?: false },
+    ),
 )
 
 @Composable
@@ -107,6 +115,7 @@ fun AppNavigationRail(
         MainRoute.Clock    to Color(0xFFFFD580),  // 소프트 앰버
         MainRoute.Schedule to Color(0xFFCE93D8),  // 소프트 라벤더
         MainRoute.TraySplit to Color(0xFFB5C99A), // 소프트 세이지그린
+        MainRoute.Rotation to Color(0xFF7FD1D1),  // 소프트 틸
     )
     val routeTextColorMap = mapOf(
         MainRoute.Pos      to Color(0xFF1565A8),  // 진한 블루
@@ -116,6 +125,7 @@ fun AppNavigationRail(
         MainRoute.Clock    to Color(0xFF8C6200),  // 진한 앰버
         MainRoute.Schedule to Color(0xFF6A3D9A),  // 진한 퍼플
         MainRoute.TraySplit to Color(0xFF4A6B2A), // 진한 올리브그린
+        MainRoute.Rotation to Color(0xFF0B6E6E),  // 진한 틸
     )
 
     NavigationRail {

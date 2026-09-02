@@ -9,6 +9,7 @@
     <string name="nav_clock">시계</string>
     <string name="nav_schedule">스케줄</string>
     <string name="nav_tray_split">판나누기</string>
+    <string name="nav_rotation">포지션2</string>
 
     <!-- Screen Titles -->
     <string name="screen_pos">비상용포스</string>
@@ -18,6 +19,7 @@
     <string name="screen_clock">시계</string>
     <string name="screen_schedule">스케줄</string>
     <string name="screen_tray_split">판나누기</string>
+    <string name="screen_rotation">포지션2</string>
 
     <!-- Common -->
     <string name="ok">확인</string>
@@ -33,6 +35,7 @@
     <string name="cd_nav_clock">시계 화면으로 이동</string>
     <string name="cd_nav_schedule">스케줄 화면으로 이동</string>
     <string name="cd_nav_tray_split">판나누기 화면으로 이동</string>
+    <string name="cd_nav_rotation">포지션2 화면으로 이동</string>
     <string name="cd_close">닫기</string>
 
     <!-- Tray Split: Top/Bottom Bar -->
@@ -230,4 +233,85 @@
     <string name="tray_snackbar_reset_done">초기화되었습니다</string>
     <string name="tray_snackbar_save_done">저장되었습니다</string>
     <string name="tray_snackbar_discord_send_done">전송에 성공했습니다</string>
+
+    <!-- Rotation (포지션2): Top bar -->
+    <string name="rotation_preset_none">프리셋 없음</string>
+    <string name="rotation_top_position_manage">포지션 관리</string>
+    <string name="rotation_top_preset_manage">프리셋 관리</string>
+    <string name="rotation_top_member_assign">인원배정</string>
+    <string name="rotation_top_break_edit">브레이크 편집</string>
+    <string name="rotation_top_settings">설정</string>
+
+    <!-- Rotation: Position Manage Dialog -->
+    <string name="rotation_position_manage_title">포지션 관리</string>
+    <string name="rotation_position_add_new">새 포지션 추가</string>
+    <string name="rotation_position_name_label">포지션 이름</string>
+    <string name="rotation_intensity_high">힘듬</string>
+    <string name="rotation_intensity_low">안힘듬</string>
+    <string name="rotation_position_min_label">최소 정원</string>
+    <string name="rotation_position_max_label">최대 정원(비우면 무제한)</string>
+    <string name="rotation_position_open_priority_label">개설 순위</string>
+    <string name="rotation_position_overflow_priority_label">잉여 순위(비우면 안받음)</string>
+
+    <!-- Rotation: Preset Manage Dialog -->
+    <string name="rotation_preset_manage_title">근무조 프리셋 관리</string>
+    <string name="rotation_preset_set_default">기본 프리셋으로 지정</string>
+    <string name="rotation_preset_name_label">프리셋 이름</string>
+    <string name="rotation_preset_roles_title">역할(role) 목록</string>
+    <string name="rotation_role_label_label">역할 이름 (예: 아침1)</string>
+    <string name="rotation_role_start_label">출근</string>
+    <string name="rotation_role_end_label">퇴근</string>
+    <string name="rotation_role_break_order_label">브레이크 순번(비우면 없음)</string>
+    <string name="rotation_role_break_minutes_label">브레이크 길이(분)</string>
+    <string name="rotation_role_add">역할 추가</string>
+
+    <!-- Rotation: Member Assign Dialog -->
+    <string name="rotation_member_assign_title">오늘 인원배정</string>
+    <string name="rotation_member_unassigned">미배정</string>
+
+    <!-- Rotation: Break Edit Dialog -->
+    <string name="rotation_break_edit_title">브레이크 편집</string>
+    <string name="rotation_break_generate_default">기본 브레이크 생성</string>
+    <string name="rotation_break_overlap_hint">겹쳐도 되고 자유롭게 옮길 수 있어요</string>
+
+    <!-- Rotation: Settings Dialog -->
+    <string name="rotation_settings_title">설정</string>
+    <string name="rotation_settings_section_time">시간</string>
+    <string name="rotation_settings_window_start">로테이션 시작</string>
+    <string name="rotation_settings_window_end">타겟타임(종료)</string>
+    <string name="rotation_settings_pre_break_desired">브레이크 전 희망 슬롯 길이(분)</string>
+    <string name="rotation_settings_post_break_desired">브레이크 후 희망 슬롯 길이(분)</string>
+    <string name="rotation_settings_min_slot">최소 슬롯 길이(분)</string>
+    <string name="rotation_settings_default_break_start">기본 브레이크 시작 시각</string>
+    <string name="rotation_settings_remainder_policy">자투리 처리</string>
+    <string name="rotation_settings_handover_mode">교대 텀 모드</string>
+    <string name="rotation_settings_section_fairness">공평성</string>
+    <string name="rotation_settings_alpha">α (아침 구간 반영 계수)</string>
+    <string name="rotation_settings_target_basis">목표 기준</string>
+    <string name="rotation_settings_fairness_priority">누적 공평 우선도</string>
+    <string name="rotation_settings_section_constraint">제약</string>
+    <string name="rotation_settings_same_position_run">동일 포지션 연속 허용 슬롯 수</string>
+    <string name="rotation_settings_break_interrupts">브레이크가 연속을 끊음</string>
+    <string name="rotation_settings_allow_high_chain">힘듬 연속 허용</string>
+    <string name="rotation_settings_high_max_run">힘듬 연속 허용 슬롯 수</string>
+    <string name="rotation_settings_high_cooldown">힘듬 후 쿨다운(슬롯)</string>
+    <string name="rotation_settings_relax_pre_break">브레이크 전 구간 제약 완화</string>
+    <string name="rotation_settings_section_tier">계층 우선순위</string>
+    <string name="rotation_settings_section_search">탐색</string>
+    <string name="rotation_settings_ils_iterations">탐색 반복 횟수</string>
+
+    <!-- Rotation: Grid -->
+    <string name="rotation_grid_empty_hint">인원배정 후 \'전체 재생성\'을 눌러 표를 만들어보세요</string>
+    <string name="rotation_grid_name_header">이름</string>
+    <string name="rotation_grid_pin_cd">고정</string>
+    <string name="rotation_grid_break_label">휴게</string>
+
+    <!-- Rotation: Chart / Score -->
+    <string name="rotation_chart_title">누적 힘듬</string>
+    <string name="rotation_chart_collapse">그래프 접기</string>
+    <string name="rotation_chart_expand">그래프 펼치기</string>
+    <string name="rotation_score_label">점수 %1$d</string>
+    <string name="rotation_violation_count">위반 %1$d건</string>
+    <string name="rotation_regenerate_from_cursor">여기부터 재생성</string>
+    <string name="rotation_regenerate_full">전체 재생성</string>
 </resources>

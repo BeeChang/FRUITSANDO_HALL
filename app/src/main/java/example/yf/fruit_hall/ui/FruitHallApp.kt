@@ -30,6 +30,7 @@ import example.yf.fruit_hall.ui.calc.calcGraph
 import example.yf.fruit_hall.ui.clock.clockGraph
 import example.yf.fruit_hall.ui.pos.posGraph
 import example.yf.fruit_hall.ui.position.positionGraph
+import example.yf.fruit_hall.ui.rotation.rotationGraph
 import example.yf.fruit_hall.ui.schedule.scheduleGraph
 import example.yf.fruit_hall.ui.traysplit.traySplitGraph
 
@@ -90,6 +91,7 @@ fun FruitHallApp(
                 clockGraph()
                 scheduleGraph()
                 traySplitGraph()
+                rotationGraph()
             }
         }
 
