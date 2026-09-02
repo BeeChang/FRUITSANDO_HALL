@@ -26,5 +26,6 @@ class NavigationPreferenceRepository @Inject constructor(
         const val KEY_SCHEDULE = "Schedule"
         const val KEY_TRAY_SPLIT = "TraySplit"
         const val KEY_ROTATION = "Rotation"
+        const val KEY_DISCORD = "Discord"
     }
 }

@@ -28,6 +28,7 @@ import androidx.navigation.compose.rememberNavController
 import example.yf.fruit_hall.ui.beomuri.beomuriGraph
 import example.yf.fruit_hall.ui.calc.calcGraph
 import example.yf.fruit_hall.ui.clock.clockGraph
+import example.yf.fruit_hall.ui.discord.discordGraph
 import example.yf.fruit_hall.ui.pos.posGraph
 import example.yf.fruit_hall.ui.position.positionGraph
 import example.yf.fruit_hall.ui.rotation.rotationGraph
@@ -92,6 +93,7 @@ fun FruitHallApp(
                 scheduleGraph()
                 traySplitGraph()
                 rotationGraph()
+                discordGraph()
             }
         }
 
