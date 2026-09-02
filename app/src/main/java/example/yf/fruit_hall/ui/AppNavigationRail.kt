@@ -9,6 +9,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Blender
 import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Casino
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Inventory2
@@ -90,6 +91,13 @@ private val railItems = listOf(
         icon = Icons.Default.Inventory2,
         isSelected = { it?.hasRoute<MainRoute.TraySplit>() ?: false },
     ),
+    RailItemData(
+        route = MainRoute.Discord,
+        labelRes = R.string.nav_discord,
+        cdRes = R.string.cd_nav_discord,
+        icon = Icons.AutoMirrored.Filled.Send,
+        isSelected = { it?.hasRoute<MainRoute.Discord>() ?: false },
+    ),
 )
 
 @Composable
@@ -107,6 +115,7 @@ fun AppNavigationRail(
         MainRoute.Clock    to Color(0xFFFFD580),  // 소프트 앰버
         MainRoute.Schedule to Color(0xFFCE93D8),  // 소프트 라벤더
         MainRoute.TraySplit to Color(0xFFB5C99A), // 소프트 세이지그린
+        MainRoute.Discord to Color(0xFF9DA9F2),   // 소프트 인디고 (디스코드 브랜드 톤)
     )
     val routeTextColorMap = mapOf(
         MainRoute.Pos      to Color(0xFF1565A8),  // 진한 블루
@@ -116,6 +125,7 @@ fun AppNavigationRail(
         MainRoute.Clock    to Color(0xFF8C6200),  // 진한 앰버
         MainRoute.Schedule to Color(0xFF6A3D9A),  // 진한 퍼플
         MainRoute.TraySplit to Color(0xFF4A6B2A), // 진한 올리브그린
+        MainRoute.Discord to Color(0xFF3F4BB0),   // 진한 인디고
     )
 
     NavigationRail {

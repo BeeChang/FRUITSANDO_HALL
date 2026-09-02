@@ -9,6 +9,7 @@
     <string name="nav_clock">시계</string>
     <string name="nav_schedule">스케줄</string>
     <string name="nav_tray_split">판나누기</string>
+    <string name="nav_discord">디스코드</string>
 
     <!-- Screen Titles -->
     <string name="screen_pos">비상용포스</string>
@@ -33,6 +34,7 @@
     <string name="cd_nav_clock">시계 화면으로 이동</string>
     <string name="cd_nav_schedule">스케줄 화면으로 이동</string>
     <string name="cd_nav_tray_split">판나누기 화면으로 이동</string>
+    <string name="cd_nav_discord">디스코드 화면으로 이동</string>
     <string name="cd_close">닫기</string>
 
     <!-- Tray Split: Top/Bottom Bar -->
