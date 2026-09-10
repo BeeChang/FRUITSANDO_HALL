@@ -7,14 +7,14 @@ package example.yf.fruit_hall.core.rotation
 object LocalSearch {
 
     fun optimize(input: RotationInput, slots: List<Slot>, initialCells: List<Cell>, shuffle: SeededShuffle): List<Cell> {
-        var (best, bestScore) = hillClimb(input, slots, initialCells, shuffle, iterationTag = -1)
+        var (best, bestRank) = hillClimb(input, slots, initialCells, shuffle, iterationTag = -1)
 
         repeat(input.search.ilsIterations) { iter ->
             val perturbed = perturb(input, slots, best, shuffle, iter)
-            val (climbed, score) = hillClimb(input, slots, perturbed, shuffle, iterationTag = iter)
-            if (score < bestScore) {
+            val (climbed, rank) = hillClimb(input, slots, perturbed, shuffle, iterationTag = iter)
+            if (RotationScore.compareRanking(rank, bestRank) < 0) {
                 best = climbed
-                bestScore = score
+                bestRank = rank
             }
         }
         return best
@@ -26,9 +26,10 @@ object LocalSearch {
         initial: List<Cell>,
         shuffle: SeededShuffle,
         iterationTag: Int
-    ): Pair<List<Cell>, Long> {
+    ): Pair<List<Cell>, List<Long>> {
         var cells = initial
-        var score = RotationScore.evaluate(input, slots, cells).score
+        // 가중합(score)이 아니라 계층별 raw의 사전식 비교로 우열을 가린다 — 가중합은 Long을 넘겨 뒤집힌다.
+        var ranking = RotationScore.evaluate(input, slots, cells).ranking
         val movableSlots = slots.filter { !it.isFrozen }
 
         var improved = true
@@ -46,10 +47,10 @@ object LocalSearch {
                         val i = candidates[oi]
                         val j = candidates[oj]
                         val swapped = swapInSlot(cells, i, j)
-                        val newScore = RotationScore.evaluate(input, slots, swapped).score
-                        if (newScore < score) {
+                        val newRanking = RotationScore.evaluate(input, slots, swapped).ranking
+                        if (RotationScore.compareRanking(newRanking, ranking) < 0) {
                             cells = swapped
-                            score = newScore
+                            ranking = newRanking
                             improved = true
                         }
                     }
@@ -60,17 +61,17 @@ object LocalSearch {
                     for (a in triples.indices) for (b in triples.indices) for (c in triples.indices) {
                         if (a == b || b == c || a == c) continue
                         val rotated = rotateInSlot(cells, candidates[a], candidates[b], candidates[c])
-                        val newScore = RotationScore.evaluate(input, slots, rotated).score
-                        if (newScore < score) {
+                        val newRanking = RotationScore.evaluate(input, slots, rotated).ranking
+                        if (RotationScore.compareRanking(newRanking, ranking) < 0) {
                             cells = rotated
-                            score = newScore
+                            ranking = newRanking
                             improved = true
                         }
                     }
                 }
             }
         }
-        return cells to score
+        return cells to ranking
     }
 
     /** §7-3: 강제 섭동 — 개선 여부와 무관하게 임의 슬롯의 두 사람을 강제로 교환한 뒤 재등반한다. */
@@ -93,13 +94,17 @@ object LocalSearch {
             c.slotIndex == slotIndex && c.state == CellState.ASSIGNED && !c.isPinned
         }
 
+    // ⚠ isManuallyEdited는 사용자가 §10-3으로 직접 고친 칸이라는 뜻이고, UI는 그 칸의 위반을
+    // "의도된 예외"로 보고 숨긴다. 탐색이 만든 칸에 이 깃발을 달면 알고리즘이 만든 위반이
+    // 화면에서 통째로 사라진다 — 여기서는 절대 건드리지 않고 원래 값을 그대로 둔다.
+
     /** 슬롯 내 두 사람의 포지션을 교환한다. 정원 제약을 절대 깨지 않는다 — 좌석 배열 원소 교환일 뿐이다. */
     private fun swapInSlot(cells: List<Cell>, indexA: Int, indexB: Int): List<Cell> {
         val a = cells[indexA]
         val b = cells[indexB]
         val result = cells.toMutableList()
-        result[indexA] = a.copy(positionId = b.positionId, isManuallyEdited = true)
-        result[indexB] = b.copy(positionId = a.positionId, isManuallyEdited = true)
+        result[indexA] = a.copy(positionId = b.positionId)
+        result[indexB] = b.copy(positionId = a.positionId)
         return result
     }
 
@@ -109,9 +114,9 @@ object LocalSearch {
         val b = cells[indexB]
         val c = cells[indexC]
         val result = cells.toMutableList()
-        result[indexA] = a.copy(positionId = b.positionId, isManuallyEdited = true)
-        result[indexB] = b.copy(positionId = c.positionId, isManuallyEdited = true)
-        result[indexC] = c.copy(positionId = a.positionId, isManuallyEdited = true)
+        result[indexA] = a.copy(positionId = b.positionId)
+        result[indexB] = b.copy(positionId = c.positionId)
+        result[indexC] = c.copy(positionId = a.positionId)
         return result
     }
 }

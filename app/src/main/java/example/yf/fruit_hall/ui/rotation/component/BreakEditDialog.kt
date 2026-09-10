@@ -4,6 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -22,6 +24,8 @@ import androidx.compose.material.icons.filled.FreeBreakfast
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -35,18 +39,26 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import example.yf.fruit_hall.R
 import example.yf.fruit_hall.ui.rotation.BreakUi
+import example.yf.fruit_hall.ui.rotation.MemberUi
 import example.yf.fruit_hall.ui.rotation.formatMinutes
 import example.yf.fruit_hall.ui.rotation.parseMinutes
 import example.yf.fruit_hall.ui.theme.AppTheme
 
+private const val DEFAULT_BREAK_MINUTES = 60
+
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun BreakEditDialog(
     breaks: List<BreakUi>,
+    assignableMembers: List<MemberUi>,
+    defaultBreakStartMin: Int,
     onGenerateDefault: () -> Unit,
     onUpdate: (memberId: Long, startMin: Int, endMin: Int) -> Unit,
     onRemove: (memberId: Long) -> Unit,
@@ -69,22 +81,42 @@ fun BreakEditDialog(
                 ) {
                     Icon(Icons.Default.FreeBreakfast, contentDescription = null, tint = appColors.white, modifier = Modifier.size(20.dp))
                     Spacer(Modifier.width(10.dp))
-                    Text("브레이크 편집", style = MaterialTheme.typography.titleMedium, color = appColors.white, modifier = Modifier.weight(1f))
+                    Text(stringResource(R.string.rotation_break_edit_title), style = MaterialTheme.typography.titleMedium, color = appColors.white, modifier = Modifier.weight(1f))
                     IconButton(onClick = onDismiss) {
-                        Icon(Icons.Default.Close, contentDescription = "닫기", tint = appColors.grey300, modifier = Modifier.size(18.dp))
+                        Icon(Icons.Default.Close, contentDescription = stringResource(R.string.rotation_close), tint = appColors.grey300, modifier = Modifier.size(18.dp))
                     }
                 }
 
                 Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp).weight(1f, fill = false)) {
-                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        Text("겹쳐도 되고 자유롭게 옮길 수 있어요", style = MaterialTheme.typography.labelSmall, color = appColors.grey500, modifier = Modifier.weight(1f))
-                        TextButton(onClick = onGenerateDefault) { Text("기본 브레이크 생성") }
+                    Text(
+                        stringResource(R.string.rotation_break_desc),
+                        style = MaterialTheme.typography.labelSmall, color = appColors.grey500
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    TextButton(onClick = onGenerateDefault) {
+                        Text(stringResource(R.string.rotation_break_fill_default, formatMinutes(defaultBreakStartMin)))
+                    }
+
+                    if (assignableMembers.isNotEmpty()) {
+                        Spacer(Modifier.height(4.dp))
+                        Text(stringResource(R.string.rotation_break_add), style = MaterialTheme.typography.labelSmall, color = appColors.grey600, fontWeight = FontWeight.Medium)
+                        Spacer(Modifier.height(6.dp))
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            assignableMembers.forEach { member ->
+                                FilterChip(
+                                    selected = false,
+                                    onClick = { onUpdate(member.id, defaultBreakStartMin, defaultBreakStartMin + DEFAULT_BREAK_MINUTES) },
+                                    label = { Text(member.name, style = MaterialTheme.typography.labelMedium) },
+                                    colors = FilterChipDefaults.filterChipColors(containerColor = appColors.secondary100, labelColor = appColors.secondary700)
+                                )
+                            }
+                        }
                     }
                     Spacer(Modifier.height(8.dp))
 
                     if (breaks.isEmpty()) {
                         Box(Modifier.fillMaxWidth().padding(vertical = 20.dp), contentAlignment = Alignment.Center) {
-                            Text("등록된 브레이크가 없어요", style = MaterialTheme.typography.bodyMedium, color = appColors.grey400)
+                            Text(stringResource(R.string.rotation_break_empty), style = MaterialTheme.typography.bodyMedium, color = appColors.grey400)
                         }
                     }
 
@@ -101,12 +133,12 @@ fun BreakEditDialog(
                                 Text(b.memberName, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
                                 OutlinedTextField(
                                     value = startText, onValueChange = { startText = it }, modifier = Modifier.width(90.dp),
-                                    label = { Text("시작") }, singleLine = true, shape = RoundedCornerShape(8.dp)
+                                    label = { Text(stringResource(R.string.rotation_break_start_label)) }, singleLine = true, shape = RoundedCornerShape(8.dp)
                                 )
                                 Spacer(Modifier.width(4.dp))
                                 OutlinedTextField(
                                     value = endText, onValueChange = { endText = it }, modifier = Modifier.width(90.dp),
-                                    label = { Text("종료") }, singleLine = true, shape = RoundedCornerShape(8.dp)
+                                    label = { Text(stringResource(R.string.rotation_break_end_label)) }, singleLine = true, shape = RoundedCornerShape(8.dp)
                                 )
                                 Spacer(Modifier.width(4.dp))
                                 Button(
@@ -115,9 +147,9 @@ fun BreakEditDialog(
                                         if (s != null && e != null) onUpdate(b.memberId, s, e)
                                     },
                                     shape = RoundedCornerShape(8.dp)
-                                ) { Text("저장") }
+                                ) { Text(stringResource(R.string.rotation_save)) }
                                 IconButton(onClick = { onRemove(b.memberId) }, modifier = Modifier.size(36.dp)) {
-                                    Icon(Icons.Default.Delete, contentDescription = "삭제", tint = appColors.crimson400.copy(alpha = 0.6f), modifier = Modifier.size(18.dp))
+                                    Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.rotation_delete), tint = appColors.crimson400.copy(alpha = 0.6f), modifier = Modifier.size(18.dp))
                                 }
                             }
                         }
@@ -128,7 +160,7 @@ fun BreakEditDialog(
                     Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    Button(onClick = onDismiss, shape = RoundedCornerShape(8.dp)) { Text("확인") }
+                    Button(onClick = onDismiss, shape = RoundedCornerShape(8.dp)) { Text(stringResource(R.string.rotation_confirm)) }
                 }
             }
         }

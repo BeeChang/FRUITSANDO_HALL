@@ -13,22 +13,20 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.FreeBreakfast
-import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -36,137 +34,124 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
+import example.yf.fruit_hall.R
 import example.yf.fruit_hall.ui.rotation.RotationScheduleTemplateUi
 import example.yf.fruit_hall.ui.rotation.formatMinutes
 import example.yf.fruit_hall.ui.theme.AppTheme
 
-/** 여러 프리셋에서 끌어다 쓸 수 있는 재사용 근무 스케줄(시작·종료·브레이크) 템플릿 관리. */
+/**
+ * 재사용 근무 스케줄 템플릿 관리. 프리셋 관리 다이얼로그의 '근무 스케줄' 탭 안에 그대로 들어간다.
+ * 여기서 만든 템플릿(오픈/미들/마감 등)은 프리셋과 무관하게 재사용되며, 로테이션 표의 팔레트에서
+ * 끌어다 놓으면 그 줄의 출퇴근 시각과 기본 브레이크가 한 번에 적용된다.
+ * 표에 들어갈 근무 줄 자체는 이 화면이 아니라 표에서 직접 추가·삭제한다.
+ */
 @Composable
-fun ScheduleManageDialog(
+fun ScheduleManageContent(
     templates: List<RotationScheduleTemplateUi>,
-    onSave: (RotationScheduleTemplateUi) -> Unit,
-    onDelete: (RotationScheduleTemplateUi) -> Unit,
-    onDismiss: () -> Unit
+    onSaveTemplate: (RotationScheduleTemplateUi) -> Unit,
+    onDeleteTemplate: (RotationScheduleTemplateUi) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val appColors = AppTheme.colors
+
     var label by remember { mutableStateOf("") }
     var start by remember { mutableStateOf(10 * 60) }
     var end by remember { mutableStateOf(19 * 60) }
-    var breakOrder by remember { mutableStateOf("") }
-    var breakMinutes by remember { mutableStateOf("60") }
+    var breakEnabled by remember { mutableStateOf(true) }
+    var breakStart by remember { mutableStateOf(13 * 60 + 30) }
+    var breakMinutesText by remember { mutableStateOf("60") }
 
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Card(
-            shape = RoundedCornerShape(16.dp),
-            modifier = Modifier.fillMaxWidth(0.55f).heightIn(max = 640.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background),
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
-        ) {
-            Column {
-                Row(
-                    modifier = Modifier.fillMaxWidth().background(appColors.success500)
-                        .padding(start = 20.dp, end = 8.dp, top = 14.dp, bottom = 14.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(Icons.Default.Schedule, contentDescription = null, tint = appColors.white, modifier = Modifier.size(20.dp))
-                    Spacer(Modifier.width(10.dp))
-                    Text("스케줄 관리", style = MaterialTheme.typography.titleMedium, color = appColors.white, modifier = Modifier.weight(1f))
-                    IconButton(onClick = onDismiss) {
-                        Icon(Icons.Default.Close, contentDescription = "닫기", tint = appColors.white.copy(alpha = 0.8f), modifier = Modifier.size(18.dp))
-                    }
-                }
+    Column(modifier.verticalScroll(rememberScrollState())) {
+        Text(
+            stringResource(R.string.rotation_schedule_desc),
+            style = MaterialTheme.typography.bodySmall, color = appColors.grey500
+        )
+        Spacer(Modifier.height(12.dp))
 
-                Column(Modifier.padding(horizontal = 20.dp, vertical = 16.dp)) {
-                    Text(
-                        "출근·퇴근·브레이크 모양을 미리 만들어두면 프리셋 관리에서 골라 쓸 수 있습니다",
-                        style = MaterialTheme.typography.bodySmall, color = appColors.grey500
-                    )
-                    Spacer(Modifier.height(12.dp))
-
-                    if (templates.isNotEmpty()) {
-                        LazyColumn(Modifier.heightIn(max = 260.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            items(templates, key = { it.id }) { template ->
-                                Row(
-                                    Modifier.fillMaxWidth()
-                                        .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(10.dp))
-                                        .padding(start = 14.dp, end = 4.dp, top = 10.dp, bottom = 10.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Column(Modifier.weight(1f)) {
-                                        Text(template.label, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Text(
-                                                "${formatMinutes(template.startMin)}~${formatMinutes(template.endMin)}",
-                                                style = MaterialTheme.typography.labelSmall, color = appColors.grey600
-                                            )
-                                            if (template.breakOrder != null) {
-                                                Spacer(Modifier.width(6.dp))
-                                                Icon(Icons.Default.FreeBreakfast, contentDescription = null, tint = appColors.success500, modifier = Modifier.size(11.dp))
-                                                Spacer(Modifier.width(2.dp))
-                                                Text("${template.breakOrder}번 ${template.breakMinutes}분", style = MaterialTheme.typography.labelSmall, color = appColors.success700)
-                                            }
-                                        }
-                                    }
-                                    IconButton(onClick = { onDelete(template) }, modifier = Modifier.size(36.dp)) {
-                                        Icon(Icons.Default.Delete, contentDescription = "삭제", tint = appColors.crimson400.copy(alpha = 0.6f), modifier = Modifier.size(18.dp))
-                                    }
-                                }
+        if (templates.isNotEmpty()) {
+            LazyColumn(Modifier.heightIn(max = 400.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                items(templates, key = { it.id }) { template ->
+                    Row(
+                        Modifier.fillMaxWidth()
+                            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(10.dp))
+                            .padding(start = 14.dp, end = 4.dp, top = 10.dp, bottom = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text(template.label, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+                            Text(
+                                stringResource(R.string.rotation_schedule_time_range, formatMinutes(template.startMin), formatMinutes(template.endMin)),
+                                style = MaterialTheme.typography.labelSmall, color = appColors.grey600
+                            )
+                            val breakStartMin = template.breakStartMin
+                            if (breakStartMin != null && template.breakMinutes > 0) {
+                                Text(
+                                    stringResource(R.string.rotation_schedule_break_range, formatMinutes(breakStartMin), formatMinutes(breakStartMin + template.breakMinutes)),
+                                    style = MaterialTheme.typography.labelSmall, color = appColors.crimson400
+                                )
                             }
                         }
-                        Spacer(Modifier.height(16.dp))
+                        IconButton(onClick = { onDeleteTemplate(template) }, modifier = Modifier.size(36.dp)) {
+                            Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.rotation_delete), tint = appColors.crimson400.copy(alpha = 0.6f), modifier = Modifier.size(18.dp))
+                        }
                     }
+                }
+            }
+            Spacer(Modifier.height(16.dp))
+        }
 
-                    Text("새 스케줄 추가", style = MaterialTheme.typography.labelLarge, color = appColors.grey700, fontWeight = FontWeight.SemiBold)
-                    Spacer(Modifier.height(10.dp))
-                    OutlinedTextField(
-                        value = label, onValueChange = { label = it }, modifier = Modifier.fillMaxWidth(),
-                        label = { Text("스케줄 이름 (예: 오픈, 미들, 마감)") }, singleLine = true, shape = RoundedCornerShape(8.dp)
+        Text(stringResource(R.string.rotation_schedule_add_new), style = MaterialTheme.typography.labelMedium, color = appColors.grey700, fontWeight = FontWeight.SemiBold)
+        Spacer(Modifier.height(8.dp))
+        OutlinedTextField(
+            value = label, onValueChange = { label = it }, modifier = Modifier.fillMaxWidth(),
+            label = { Text(stringResource(R.string.rotation_schedule_name_label)) }, singleLine = true, shape = RoundedCornerShape(8.dp)
+        )
+        Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            RotationTimePickerField(label = stringResource(R.string.rotation_role_start_label), minutes = start, onChange = { start = it }, modifier = Modifier.weight(1f))
+            RotationTimePickerField(label = stringResource(R.string.rotation_role_end_label), minutes = end, onChange = { end = it }, modifier = Modifier.weight(1f))
+        }
+
+        Row(Modifier.fillMaxWidth().padding(top = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(stringResource(R.string.rotation_schedule_break_section), style = MaterialTheme.typography.labelMedium, color = appColors.grey700, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+            Switch(
+                checked = breakEnabled, onCheckedChange = { breakEnabled = it },
+                colors = SwitchDefaults.colors(checkedTrackColor = appColors.crimson400)
+            )
+        }
+        if (breakEnabled) {
+            Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                RotationTimePickerField(label = stringResource(R.string.rotation_schedule_break_start), minutes = breakStart, onChange = { breakStart = it }, modifier = Modifier.weight(1f))
+                OutlinedTextField(
+                    value = breakMinutesText,
+                    onValueChange = { v -> breakMinutesText = v.filter { it.isDigit() }.take(3) },
+                    modifier = Modifier.weight(1f),
+                    label = { Text(stringResource(R.string.rotation_role_break_minutes_label)) }, singleLine = true, shape = RoundedCornerShape(8.dp)
+                )
+            }
+        }
+
+        Row(Modifier.fillMaxWidth().padding(top = 10.dp), horizontalArrangement = Arrangement.End) {
+            Button(
+                onClick = {
+                    if (label.isBlank()) return@Button
+                    onSaveTemplate(
+                        RotationScheduleTemplateUi(
+                            id = 0, label = label, startMin = start, endMin = end,
+                            breakStartMin = if (breakEnabled) breakStart else null,
+                            breakMinutes = if (breakEnabled) (breakMinutesText.toIntOrNull() ?: 60) else 0,
+                            sortOrder = templates.size
+                        )
                     )
-                    Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        RotationTimePickerField(label = "출근", minutes = start, onChange = { start = it }, modifier = Modifier.weight(1f))
-                        RotationTimePickerField(label = "퇴근", minutes = end, onChange = { end = it }, modifier = Modifier.weight(1f))
-                    }
-                    Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedTextField(
-                            value = breakOrder, onValueChange = { breakOrder = it }, modifier = Modifier.weight(1f),
-                            label = { Text("브레이크 순번(비우면 없음)") }, singleLine = true, shape = RoundedCornerShape(8.dp)
-                        )
-                        OutlinedTextField(
-                            value = breakMinutes, onValueChange = { breakMinutes = it }, modifier = Modifier.weight(1f),
-                            label = { Text("브레이크 길이(분)") }, singleLine = true, shape = RoundedCornerShape(8.dp)
-                        )
-                    }
-                }
-
-                Row(
-                    Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp),
-                    horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically
-                ) {
-                    TextButton(onClick = onDismiss) { Text("닫기", color = appColors.grey600) }
-                    Spacer(Modifier.width(4.dp))
-                    Button(
-                        onClick = {
-                            if (label.isBlank()) return@Button
-                            onSave(
-                                RotationScheduleTemplateUi(
-                                    id = 0, label = label, startMin = start, endMin = end,
-                                    breakOrder = breakOrder.toIntOrNull(), breakMinutes = breakMinutes.toIntOrNull() ?: 60,
-                                    sortOrder = templates.size
-                                )
-                            )
-                            label = ""
-                        },
-                        enabled = label.isNotBlank(), shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(Modifier.width(4.dp))
-                        Text("스케줄 추가")
-                    }
-                }
+                    label = ""
+                },
+                enabled = label.isNotBlank(), shape = RoundedCornerShape(8.dp)
+            ) {
+                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                Spacer(Modifier.width(4.dp))
+                Text(stringResource(R.string.rotation_schedule_add))
             }
         }
     }

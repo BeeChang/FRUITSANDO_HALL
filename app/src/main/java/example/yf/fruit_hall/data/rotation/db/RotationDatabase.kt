@@ -36,7 +36,7 @@ import example.yf.fruit_hall.data.rotation.entity.ShiftRoleEntity
         RotationSettingsEntity::class,
         ScheduleTemplateEntity::class
     ],
-    version = 4,
+    version = 6,
     exportSchema = false
 )
 abstract class RotationDatabase : RoomDatabase() {

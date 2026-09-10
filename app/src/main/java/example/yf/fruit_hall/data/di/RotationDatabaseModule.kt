@@ -53,6 +53,20 @@ object RotationDatabaseModule {
         }
     }
 
+    // 오늘 그 줄에 적용한 근무 스케줄 이름을 표의 이름 칸에 보여주기 위한 컬럼 추가
+    private val MIGRATION_4_5 = object : Migration(4, 5) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE day_role_assignments ADD COLUMN scheduleLabel TEXT")
+        }
+    }
+
+    // 표에는 보이되 포지션 배정에서만 빼는 토글
+    private val MIGRATION_5_6 = object : Migration(5, 6) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE day_role_assignments ADD COLUMN excludedFromAssign INTEGER NOT NULL DEFAULT 0")
+        }
+    }
+
     @Provides
     @Singleton
     fun provideRotationDatabase(@ApplicationContext context: Context): RotationDatabase {
@@ -62,7 +76,7 @@ object RotationDatabaseModule {
             "rotation_database"
         )
             // destructive fallback 없음: 스키마를 바꿀 땐 반드시 여기에 실제 Migration을 추가해야 한다.
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
             .addCallback(object : RoomDatabase.Callback() {
                 override fun onCreate(db: SupportSQLiteDatabase) {
                     super.onCreate(db)

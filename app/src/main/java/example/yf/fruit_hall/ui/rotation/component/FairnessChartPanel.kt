@@ -22,12 +22,6 @@ import example.yf.fruit_hall.R
 import example.yf.fruit_hall.ui.rotation.RotationRowUi
 import example.yf.fruit_hall.ui.theme.AppTheme
 
-private fun String.toColorSafe(): Color = try {
-    Color(android.graphics.Color.parseColor(this))
-} catch (e: Exception) {
-    Color.Gray
-}
-
 /** §10-4. 시간축 꺾은선 — 사람별 라인 + 목표선. 셀 수정 즉시 갱신되어야 하므로 상위 상태를 그대로 그린다. */
 @Composable
 fun FairnessChartPanel(
@@ -63,7 +57,7 @@ fun FairnessChartPanel(
             }
             // 사람별 부채 곡선
             debtCurve.forEach { (memberId, curve) ->
-                val color = nameByMember[memberId]?.colorHex?.toColorSafe() ?: Color.Gray
+                val color = nameByMember[memberId]?.colorHex.toRotationColor(Color.Gray)
                 val points = pointsFor(curve)
                 for (i in 0 until points.size - 1) {
                     drawLine(color = color, start = points[i], end = points[i + 1], strokeWidth = 4f)
@@ -75,7 +69,7 @@ fun FairnessChartPanel(
                 Row(Modifier.padding(end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                     Box(Modifier.size(10.dp)) {
                         Canvas(Modifier.size(10.dp)) {
-                            drawCircle(color = row.colorHex.toColorSafe())
+                            drawCircle(color = row.colorHex.toRotationColor(Color.Gray))
                         }
                     }
                     Text(" ${row.name}", style = MaterialTheme.typography.labelSmall)

@@ -23,14 +23,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -41,7 +37,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -51,10 +46,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
+import example.yf.fruit_hall.R
 import example.yf.fruit_hall.ui.rotation.RotationPositionUi
 import example.yf.fruit_hall.ui.theme.AppTheme
 
@@ -70,20 +65,32 @@ private val positionColorPalette = listOf(
 
 private const val DARK_TEXT = 0xFF2D2D2D
 
-private fun String.toColorOrDefault(): Color = try {
-    Color(android.graphics.Color.parseColor(this))
-} catch (e: Exception) {
-    Color(0xFF7FD1D1)
+// 포지션 칩만 민트색을 기본값으로 쓴다(멤버 칩의 분홍과 구분되도록).
+private val positionDefaultColor = Color(0xFF7FD1D1)
+
+/** 목록 한 줄에 붙는 "고강도 · 최소2 · 최대무제한 · 우선1" 요약. 추가 순위는 있을 때만 뒤에 덧붙는다. */
+@Composable
+private fun positionSummary(p: RotationPositionUi): String {
+    val base = stringResource(
+        R.string.rotation_position_summary,
+        stringResource(if (p.isHigh) R.string.rotation_intensity_high else R.string.rotation_intensity_low),
+        p.minCount,
+        p.maxCount?.toString() ?: stringResource(R.string.rotation_position_unlimited),
+        p.openPriority
+    )
+    val overflow = p.overflowPriority ?: return base
+    return stringResource(R.string.rotation_position_summary_overflow, base, overflow)
 }
 
+/** 포지션 관리 본문. 프리셋 관리 다이얼로그의 '포지션' 탭 안에 그대로 들어간다(전역 설정 — 프리셋과 무관). */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun PositionManageDialog(
+fun PositionManageContent(
     positions: List<RotationPositionUi>,
     onSave: (RotationPositionUi) -> Unit,
     onDelete: (Long) -> Unit,
     onToggleActive: (Long, Boolean) -> Unit,
-    onDismiss: () -> Unit
+    modifier: Modifier = Modifier
 ) {
     val appColors = AppTheme.colors
     var name by remember { mutableStateOf("") }
@@ -94,49 +101,22 @@ fun PositionManageDialog(
     var overflowPriority by remember { mutableStateOf("") }
     var selectedColor by remember { mutableStateOf(positionColorPalette[0]) }
 
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Card(
-            shape = RoundedCornerShape(16.dp),
-            modifier = Modifier.fillMaxWidth(0.6f).heightIn(max = 700.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background),
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
-        ) {
-            Column {
-                Row(
-                    modifier = Modifier.fillMaxWidth().background(appColors.grey900)
-                        .padding(start = 20.dp, end = 8.dp, top = 14.dp, bottom = 14.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(Icons.AutoMirrored.Filled.List, contentDescription = null, tint = appColors.white, modifier = Modifier.size(20.dp))
-                    Spacer(Modifier.width(10.dp))
-                    Text("포지션 관리", style = MaterialTheme.typography.titleMedium, color = appColors.white, modifier = Modifier.weight(1f))
-                    IconButton(onClick = onDismiss) {
-                        Icon(Icons.Default.Close, contentDescription = "닫기", tint = appColors.grey300, modifier = Modifier.size(18.dp))
-                    }
-                }
-
-                Column(
-                    modifier = Modifier
-                        .padding(horizontal = 20.dp, vertical = 16.dp)
-                        .weight(1f, fill = false)
-                        .verticalScroll(rememberScrollState())
-                ) {
+    Column(modifier = modifier.verticalScroll(rememberScrollState())) {
                     if (positions.isNotEmpty()) {
                         LazyColumn(Modifier.heightIn(max = 320.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                             items(positions, key = { it.id }) { p ->
                                 Row(
                                     Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp))
-                                        .background(p.colorHex.toColorOrDefault().copy(alpha = 0.18f))
+                                        .background(p.colorHex.toRotationColor(positionDefaultColor).copy(alpha = 0.18f))
                                         .padding(start = 14.dp, end = 4.dp, top = 10.dp, bottom = 10.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Box(Modifier.size(14.dp).clip(CircleShape).background(p.colorHex.toColorOrDefault()))
+                                    Box(Modifier.size(14.dp).clip(CircleShape).background(p.colorHex.toRotationColor(positionDefaultColor)))
                                     Spacer(Modifier.width(10.dp))
                                     Column(Modifier.weight(1f)) {
                                         Text(p.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
                                         Text(
-                                            (if (p.isHigh) "힘듬" else "안힘듬") + " · 최소${p.minCount} · 최대${p.maxCount ?: "무제한"}" +
-                                                " · 우선${p.openPriority}" + (p.overflowPriority?.let { " · 추가$it" } ?: ""),
+                                            positionSummary(p),
                                             style = MaterialTheme.typography.labelSmall, color = appColors.grey600
                                         )
                                     }
@@ -145,7 +125,7 @@ fun PositionManageDialog(
                                         colors = SwitchDefaults.colors(checkedTrackColor = appColors.primary500)
                                     )
                                     IconButton(onClick = { onDelete(p.id) }, modifier = Modifier.size(36.dp)) {
-                                        Icon(Icons.Default.Delete, contentDescription = "삭제", tint = appColors.crimson400.copy(alpha = 0.6f), modifier = Modifier.size(18.dp))
+                                        Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.rotation_delete), tint = appColors.crimson400.copy(alpha = 0.6f), modifier = Modifier.size(18.dp))
                                     }
                                 }
                             }
@@ -155,22 +135,22 @@ fun PositionManageDialog(
                         Spacer(Modifier.height(16.dp))
                     }
 
-                    Text("새 포지션 추가", style = MaterialTheme.typography.labelLarge, color = appColors.grey700, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.rotation_position_add_new), style = MaterialTheme.typography.labelLarge, color = appColors.grey700, fontWeight = FontWeight.SemiBold)
                     Spacer(Modifier.height(10.dp))
 
                     OutlinedTextField(
-                        value = name, onValueChange = { name = it }, label = { Text("포지션 이름") },
+                        value = name, onValueChange = { name = it }, label = { Text(stringResource(R.string.rotation_position_name_label)) },
                         modifier = Modifier.fillMaxWidth(), singleLine = true, shape = RoundedCornerShape(8.dp),
-                        leadingIcon = { Box(Modifier.size(20.dp).clip(CircleShape).background(selectedColor.toColorOrDefault())) }
+                        leadingIcon = { Box(Modifier.size(20.dp).clip(CircleShape).background(selectedColor.toRotationColor(positionDefaultColor))) }
                     )
                     Spacer(Modifier.height(10.dp))
-                    Text("컬러 선택", style = MaterialTheme.typography.labelSmall, color = appColors.grey500)
+                    Text(stringResource(R.string.rotation_color_select), style = MaterialTheme.typography.labelSmall, color = appColors.grey500)
                     Spacer(Modifier.height(8.dp))
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         positionColorPalette.forEach { hex ->
                             val isSelected = selectedColor == hex
                             Box(
-                                Modifier.size(28.dp).clip(CircleShape).background(hex.toColorOrDefault())
+                                Modifier.size(28.dp).clip(CircleShape).background(hex.toRotationColor(positionDefaultColor))
                                     .then(if (isSelected) Modifier.border(2.5.dp, Color(DARK_TEXT), CircleShape) else Modifier)
                                     .clickable { selectedColor = hex },
                                 contentAlignment = Alignment.Center
@@ -183,12 +163,12 @@ fun PositionManageDialog(
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         FilterChip(
                             selected = !isHigh, onClick = { isHigh = false },
-                            label = { Text("안힘듬", style = MaterialTheme.typography.labelMedium) },
+                            label = { Text(stringResource(R.string.rotation_intensity_low), style = MaterialTheme.typography.labelMedium) },
                             colors = FilterChipDefaults.filterChipColors(selectedContainerColor = appColors.secondary100, selectedLabelColor = appColors.secondary700)
                         )
                         FilterChip(
                             selected = isHigh, onClick = { isHigh = true },
-                            label = { Text("힘듬", style = MaterialTheme.typography.labelMedium) },
+                            label = { Text(stringResource(R.string.rotation_intensity_high), style = MaterialTheme.typography.labelMedium) },
                             colors = FilterChipDefaults.filterChipColors(selectedContainerColor = appColors.crimson100, selectedLabelColor = appColors.crimson700)
                         )
                     }
@@ -196,34 +176,32 @@ fun PositionManageDialog(
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedTextField(
                             value = minCount, onValueChange = { minCount = it }, modifier = Modifier.weight(1f),
-                            label = { Text("최소 정원") }, singleLine = true, shape = RoundedCornerShape(8.dp)
+                            label = { Text(stringResource(R.string.rotation_position_min_label)) }, singleLine = true, shape = RoundedCornerShape(8.dp)
                         )
                         OutlinedTextField(
                             value = maxCount, onValueChange = { maxCount = it }, modifier = Modifier.weight(1f),
-                            label = { Text("최대(비우면 무제한)") }, singleLine = true, shape = RoundedCornerShape(8.dp)
+                            label = { Text(stringResource(R.string.rotation_position_max_label)) }, singleLine = true, shape = RoundedCornerShape(8.dp)
                         )
                     }
                     Spacer(Modifier.height(8.dp))
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedTextField(
                             value = openPriority, onValueChange = { openPriority = it }, modifier = Modifier.weight(1f),
-                            label = { Text("우선 배정 순위") }, singleLine = true, shape = RoundedCornerShape(8.dp)
+                            label = { Text(stringResource(R.string.rotation_position_open_priority_label)) }, singleLine = true, shape = RoundedCornerShape(8.dp)
                         )
                         OutlinedTextField(
                             value = overflowPriority, onValueChange = { overflowPriority = it }, modifier = Modifier.weight(1f),
-                            label = { Text("추가 배정 순위(비우면 안받음)") }, singleLine = true, shape = RoundedCornerShape(8.dp)
+                            label = { Text(stringResource(R.string.rotation_position_overflow_priority_label)) }, singleLine = true, shape = RoundedCornerShape(8.dp)
                         )
                     }
                     Text(
-                        "우선 배정: 인원이 부족해도 이 순서대로 먼저·끝까지 채워요 (1이 가장 먼저)\n추가 배정: 인원이 남으면 이 순서대로 더 받아요",
+                        stringResource(R.string.rotation_position_priority_hint),
                         style = MaterialTheme.typography.labelSmall, color = appColors.grey500,
                         modifier = Modifier.padding(top = 4.dp)
                     )
 
                     Spacer(Modifier.height(16.dp))
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
-                        TextButton(onClick = onDismiss) { Text("닫기", color = appColors.grey600) }
-                        Spacer(Modifier.width(4.dp))
                         Button(
                             onClick = {
                                 if (name.isNotBlank()) {
@@ -244,11 +222,8 @@ fun PositionManageDialog(
                         ) {
                             Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(Modifier.width(4.dp))
-                            Text("추가")
+                            Text(stringResource(R.string.rotation_add))
                         }
                     }
-                }
-            }
-        }
     }
 }

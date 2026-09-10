@@ -25,7 +25,9 @@ data class ShiftRoleEntity(
     val label: String,
     val startMin: Int,
     val endMin: Int,
-    val breakOrder: Int? = null,   // null = 브레이크 없음 (반차 등)
+    // 순번이 아니라 실제 시작 시각(분)이다 — 물리 컬럼명은 과거 breakOrder 그대로 두고 의미만 바꿔 마이그레이션을 피했다.
+    @ColumnInfo(name = "breakOrder")
+    val breakStartMin: Int? = null,   // null = 브레이크 없음 (반차 등)
     val breakMinutes: Int = 60,
     val sortOrder: Int = 0,
     // MIGRATION_1_2가 raw SQL로 DEFAULT 1을 붙였으므로, Room이 기대하는 스키마도 반드시 맞춰준다

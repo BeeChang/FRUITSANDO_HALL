@@ -48,10 +48,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import example.yf.fruit_hall.R
 import example.yf.fruit_hall.ui.rotation.MemberUi
 import example.yf.fruit_hall.ui.theme.AppTheme
 
@@ -68,12 +70,6 @@ private val memberColorPalette = listOf(
 )
 
 private const val DARK_TEXT = 0xFF2D2D2D
-
-private fun String.toColor(): Color = try {
-    Color(android.graphics.Color.parseColor(this))
-} catch (e: Exception) {
-    Color(0xFFFFB3C6)
-}
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -105,11 +101,11 @@ fun RotationMemberDialog(
                     Icon(Icons.Default.Person, contentDescription = null, tint = appColors.white, modifier = Modifier.size(20.dp))
                     Spacer(Modifier.width(10.dp))
                     Text(
-                        text = "멤버 관리", style = MaterialTheme.typography.titleMedium,
+                        text = stringResource(R.string.rotation_member_manage_title), style = MaterialTheme.typography.titleMedium,
                         color = appColors.white, modifier = Modifier.weight(1f)
                     )
                     IconButton(onClick = onDismiss) {
-                        Icon(Icons.Default.Close, contentDescription = "닫기", tint = appColors.grey300, modifier = Modifier.size(18.dp))
+                        Icon(Icons.Default.Close, contentDescription = stringResource(R.string.rotation_close), tint = appColors.grey300, modifier = Modifier.size(18.dp))
                     }
                 }
 
@@ -121,12 +117,12 @@ fun RotationMemberDialog(
                 ) {
                     if (members.isEmpty()) {
                         Box(Modifier.fillMaxWidth().padding(vertical = 12.dp), contentAlignment = Alignment.Center) {
-                            Text("멤버를 추가해보세요", style = MaterialTheme.typography.bodyMedium, color = appColors.grey400)
+                            Text(stringResource(R.string.rotation_member_empty), style = MaterialTheme.typography.bodyMedium, color = appColors.grey400)
                         }
                     } else {
                         LazyColumn(Modifier.heightIn(max = 220.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                             items(members, key = { it.id }) { member ->
-                                val memberBg = member.colorHex.toColor()
+                                val memberBg = member.colorHex.toRotationColor(rotationDefaultChipColor)
                                 Row(
                                     Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
                                         .background(memberBg.copy(alpha = 0.25f))
@@ -139,7 +135,7 @@ fun RotationMemberDialog(
                                     Spacer(Modifier.width(10.dp))
                                     Text(member.name, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f), color = Color(DARK_TEXT), fontWeight = FontWeight.Medium)
                                     IconButton(onClick = { onDeleteMember(member.id) }, modifier = Modifier.size(34.dp)) {
-                                        Icon(Icons.Default.Delete, contentDescription = "삭제", tint = appColors.crimson400.copy(alpha = 0.6f), modifier = Modifier.size(17.dp))
+                                        Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.rotation_delete), tint = appColors.crimson400.copy(alpha = 0.6f), modifier = Modifier.size(17.dp))
                                     }
                                 }
                             }
@@ -150,25 +146,25 @@ fun RotationMemberDialog(
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                     Spacer(Modifier.height(16.dp))
 
-                    Text("새 멤버 추가", style = MaterialTheme.typography.labelLarge, color = appColors.grey700, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.rotation_member_add_new), style = MaterialTheme.typography.labelLarge, color = appColors.grey700, fontWeight = FontWeight.SemiBold)
                     Spacer(Modifier.height(10.dp))
 
                     OutlinedTextField(
-                        value = newName, onValueChange = { newName = it }, label = { Text("이름") },
+                        value = newName, onValueChange = { newName = it }, label = { Text(stringResource(R.string.rotation_member_name_label)) },
                         modifier = Modifier.fillMaxWidth(), singleLine = true, shape = RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = selectedColor.toColor(), focusedLabelColor = appColors.grey600),
-                        leadingIcon = { Box(Modifier.size(22.dp).clip(CircleShape).background(selectedColor.toColor())) }
+                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = selectedColor.toRotationColor(rotationDefaultChipColor), focusedLabelColor = appColors.grey600),
+                        leadingIcon = { Box(Modifier.size(22.dp).clip(CircleShape).background(selectedColor.toRotationColor(rotationDefaultChipColor))) }
                     )
 
                     Spacer(Modifier.height(14.dp))
-                    Text("컬러 선택", style = MaterialTheme.typography.labelSmall, color = appColors.grey500)
+                    Text(stringResource(R.string.rotation_color_select), style = MaterialTheme.typography.labelSmall, color = appColors.grey500)
                     Spacer(Modifier.height(8.dp))
 
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         memberColorPalette.forEach { hex ->
                             val isSelected = selectedColor == hex
                             Box(
-                                Modifier.size(30.dp).clip(CircleShape).background(hex.toColor())
+                                Modifier.size(30.dp).clip(CircleShape).background(hex.toRotationColor(rotationDefaultChipColor))
                                     .then(if (isSelected) Modifier.border(2.5.dp, Color(DARK_TEXT), CircleShape) else Modifier)
                                     .clickable { selectedColor = hex },
                                 contentAlignment = Alignment.Center
@@ -183,14 +179,14 @@ fun RotationMemberDialog(
                     Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    TextButton(onClick = onDismiss, modifier = Modifier.weight(1f)) { Text("닫기", color = appColors.grey600) }
+                    TextButton(onClick = onDismiss, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.rotation_close), color = appColors.grey600) }
                     Button(
                         onClick = { if (newName.isNotBlank()) { onAddMember(newName.trim(), selectedColor); newName = "" } },
                         enabled = newName.isNotBlank(), modifier = Modifier.weight(1f), shape = RoundedCornerShape(12.dp)
                     ) {
                         Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(Modifier.width(4.dp))
-                        Text("추가")
+                        Text(stringResource(R.string.rotation_add))
                     }
                 }
             }

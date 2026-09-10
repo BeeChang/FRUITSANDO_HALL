@@ -87,7 +87,25 @@ data class RotationInput(
     val constraints: ConstraintConfig,
     val tierOrder: List<Tier>,
     val search: SearchConfig,
-    val frozen: FrozenState? = null
+    val frozen: FrozenState? = null,
+    /**
+     * 사용자가 핀으로 고정한 자리(§3-5 "재생성해도 유지"). 초기해를 만들 때 먼저 앉히고 시작한다 —
+     * LocalSearch만 핀을 보면 그리디가 처음부터 다시 배정해 버려서 핀이 지켜지지 않는다.
+     */
+    val pinnedCells: List<PinnedAssignment> = emptyList()
+)
+
+/**
+ * 핀은 슬롯 **번호**가 아니라 **시각**에 걸린다. 브레이크·근무시간을 바꾸면 앵커가 달라져 그리드가
+ * 통째로 다시 짜이고(§4-1), 그때 슬롯 번호는 전혀 다른 시간대를 가리키게 된다 — 번호로 붙여두면
+ * 핀이 엉뚱한 칸으로 옮겨간다.
+ */
+data class PinnedAssignment(
+    val memberId: Long,
+    val startMin: Int,
+    val endMin: Int,
+    val positionId: Long?,
+    val isBreak: Boolean
 )
 
 data class Slot(

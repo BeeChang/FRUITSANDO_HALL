@@ -31,8 +31,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import example.yf.fruit_hall.R
 import example.yf.fruit_hall.ui.rotation.formatMinutes
 import example.yf.fruit_hall.ui.theme.AppTheme
 
@@ -90,7 +92,7 @@ fun RotationTimePickerField(
                         TimePicker(state = state)
                     }
                     Row(Modifier.fillMaxWidth().padding(top = 12.dp), horizontalArrangement = Arrangement.End) {
-                        TextButton(onClick = { showPicker = false }) { Text("취소", color = appColors.grey600) }
+                        TextButton(onClick = { showPicker = false }) { Text(stringResource(R.string.rotation_cancel), color = appColors.grey600) }
                         Spacer(Modifier.width(4.dp))
                         Button(
                             onClick = {
@@ -98,7 +100,7 @@ fun RotationTimePickerField(
                                 showPicker = false
                             },
                             shape = RoundedCornerShape(8.dp)
-                        ) { Text("확인") }
+                        ) { Text(stringResource(R.string.rotation_confirm)) }
                     }
                 }
             }

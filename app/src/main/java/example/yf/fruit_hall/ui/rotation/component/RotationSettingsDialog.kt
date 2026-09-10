@@ -1,6 +1,9 @@
 package example.yf.fruit_hall.ui.rotation.component
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -8,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -16,10 +20,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.DragHandle
 import androidx.compose.material.icons.filled.Tune
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
@@ -32,21 +34,27 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
-import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.zIndex
+import example.yf.fruit_hall.R
 import example.yf.fruit_hall.core.rotation.FairnessPriority
 import example.yf.fruit_hall.core.rotation.HandoverMode
 import example.yf.fruit_hall.core.rotation.RemainderPolicy
@@ -54,58 +62,86 @@ import example.yf.fruit_hall.core.rotation.TargetBasis
 import example.yf.fruit_hall.core.rotation.Tier
 import example.yf.fruit_hall.ui.rotation.RotationSettingsUi
 import example.yf.fruit_hall.ui.theme.AppTheme
+import kotlin.math.roundToInt
 
+// 선택지 라벨은 문자열이 아니라 리소스 id로 돌려준다 — @Composable이 아닌 곳에서도 부를 수 있어야
+// ChipRow 같은 공용 컴포넌트에 그대로 넘길 수 있다. 문자열로 푸는 건 화면을 그리는 쪽 몫이다.
+@StringRes
 private fun tierLabel(tier: Tier) = when (tier) {
-    Tier.CUMULATIVE_HIGH -> "누적 힘듬 편차"
-    Tier.CONSTRAINT -> "연속 위반"
-    Tier.HIGH_VARIETY -> "힘듬 종류별 편차"
-    Tier.LOW_FAIRNESS -> "비힘듬 공평"
-    Tier.TIEBREAK -> "타이브레이크"
+    Tier.CUMULATIVE_HIGH -> R.string.rotation_tier_cumulative_high
+    Tier.CONSTRAINT -> R.string.rotation_tier_constraint
+    Tier.HIGH_VARIETY -> R.string.rotation_tier_high_variety
+    Tier.LOW_FAIRNESS -> R.string.rotation_tier_low_fairness
+    Tier.TIEBREAK -> R.string.rotation_tier_tiebreak
 }
 
+@StringRes
+private fun tierDescription(tier: Tier) = when (tier) {
+    Tier.CUMULATIVE_HIGH -> R.string.rotation_tier_cumulative_high_desc
+    Tier.CONSTRAINT -> R.string.rotation_tier_constraint_desc
+    Tier.HIGH_VARIETY -> R.string.rotation_tier_high_variety_desc
+    Tier.LOW_FAIRNESS -> R.string.rotation_tier_low_fairness_desc
+    Tier.TIEBREAK -> R.string.rotation_tier_tiebreak_desc
+}
+
+@StringRes
 private fun remainderLabel(p: RemainderPolicy) = when (p) {
-    RemainderPolicy.REDISTRIBUTE -> "재분배"
-    RemainderPolicy.ABSORB -> "흡수"
-    RemainderPolicy.STANDALONE -> "독립"
-    RemainderPolicy.DROP -> "제외"
+    RemainderPolicy.REDISTRIBUTE -> R.string.rotation_remainder_redistribute
+    RemainderPolicy.ABSORB -> R.string.rotation_remainder_absorb
+    RemainderPolicy.STANDALONE -> R.string.rotation_remainder_standalone
+    RemainderPolicy.DROP -> R.string.rotation_remainder_drop
 }
 
+@StringRes
 private fun handoverLabel(m: HandoverMode) = when (m) {
-    HandoverMode.DISPLAY_ONLY -> "표시만"
-    HandoverMode.DEDUCT -> "부채 차감"
+    HandoverMode.DISPLAY_ONLY -> R.string.rotation_handover_display_only
+    HandoverMode.DEDUCT -> R.string.rotation_handover_deduct
 }
 
+@StringRes
 private fun targetBasisLabel(t: TargetBasis) = when (t) {
-    TargetBasis.TOTAL_MINUTES -> "총분(1/N)"
-    TargetBasis.PRESENCE_RATIO -> "재실 비율"
+    TargetBasis.TOTAL_MINUTES -> R.string.rotation_target_total_minutes
+    TargetBasis.PRESENCE_RATIO -> R.string.rotation_target_presence_ratio
 }
 
+@StringRes
 private fun priorityLabel(p: FairnessPriority) = when (p) {
-    FairnessPriority.HIGH -> "높음"
-    FairnessPriority.MID -> "중간"
-    FairnessPriority.LOW -> "낮음"
-    FairnessPriority.OFF -> "끔"
+    FairnessPriority.HIGH -> R.string.rotation_priority_high
+    FairnessPriority.MID -> R.string.rotation_priority_mid
+    FairnessPriority.LOW -> R.string.rotation_priority_low
+    FairnessPriority.OFF -> R.string.rotation_priority_off
 }
 
-private val settingsTabs = listOf("시간", "공평성", "제약", "우선순위", "탐색")
+private val settingsTabs = listOf(
+    R.string.rotation_settings_section_time,
+    R.string.rotation_settings_section_fairness,
+    R.string.rotation_settings_section_constraint,
+    R.string.rotation_settings_section_tier,
+    R.string.rotation_settings_section_search
+)
 
 @Composable
 private fun FieldHint(text: String) {
-    val appColors = AppTheme.colors
-    Text(text, style = MaterialTheme.typography.labelSmall, color = appColors.grey500, modifier = Modifier.padding(bottom = 8.dp, top = 1.dp))
+    Text(
+        text, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface,
+        modifier = Modifier.padding(bottom = 8.dp, top = 1.dp)
+    )
 }
 
 @Composable
-private fun <T> ChipRow(label: String, hint: String, value: T, options: List<T>, labelOf: (T) -> String, onChange: (T) -> Unit) {
+private fun <T> ChipRow(label: String, hint: String, value: T, options: List<T>, labelOf: (T) -> Int, onChange: (T) -> Unit) {
     val appColors = AppTheme.colors
-    Text(label, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, modifier = Modifier.padding(top = 6.dp))
+    Text(
+        label, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium,
+        color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(top = 6.dp)
+    )
     FieldHint(hint)
     Row(Modifier.fillMaxWidth().padding(bottom = 4.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         options.forEach { opt ->
             FilterChip(
                 selected = opt == value,
                 onClick = { onChange(opt) },
-                label = { Text(labelOf(opt), style = MaterialTheme.typography.labelMedium) },
+                label = { Text(stringResource(labelOf(opt)), style = MaterialTheme.typography.labelMedium) },
                 colors = FilterChipDefaults.filterChipColors(selectedContainerColor = appColors.primary100, selectedLabelColor = appColors.primary700)
             )
         }
@@ -137,8 +173,8 @@ private fun SwitchRow(label: String, hint: String, checked: Boolean, onChange: (
     val appColors = AppTheme.colors
     Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
-            Text(label, style = MaterialTheme.typography.bodyMedium)
-            Text(hint, style = MaterialTheme.typography.labelSmall, color = appColors.grey500)
+            Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
+            Text(hint, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface)
         }
         Switch(checked = checked, onCheckedChange = onChange, colors = SwitchDefaults.colors(checkedTrackColor = appColors.primary500))
     }
@@ -153,6 +189,12 @@ fun RotationSettingsDialog(
     val appColors = AppTheme.colors
     var s by remember(settings) { mutableStateOf(settings) }
     var tab by remember { mutableIntStateOf(0) }
+
+    // 필드를 바꾸는 즉시 저장한다 — 별도 "저장" 버튼을 누르지 않아도 바로 반영된다.
+    fun apply(next: RotationSettingsUi) {
+        s = next
+        onSave(next)
+    }
 
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Card(
@@ -169,27 +211,32 @@ fun RotationSettingsDialog(
                 ) {
                     Icon(Icons.Default.Tune, contentDescription = null, tint = appColors.white, modifier = Modifier.size(20.dp))
                     Spacer(Modifier.width(10.dp))
-                    Text("설정", style = MaterialTheme.typography.titleMedium, color = appColors.white, modifier = Modifier.weight(1f))
+                    Text(stringResource(R.string.rotation_settings_title), style = MaterialTheme.typography.titleMedium, color = appColors.white, modifier = Modifier.weight(1f))
+                    Text(stringResource(R.string.rotation_settings_applies_immediately), style = MaterialTheme.typography.labelSmall, color = appColors.grey300)
+                    Spacer(Modifier.width(12.dp))
                     IconButton(onClick = onDismiss) {
-                        Icon(Icons.Default.Close, contentDescription = "닫기", tint = appColors.grey300, modifier = Modifier.size(18.dp))
+                        Icon(Icons.Default.Close, contentDescription = stringResource(R.string.rotation_close), tint = appColors.grey300, modifier = Modifier.size(18.dp))
                     }
                 }
 
                 TabRow(
                     selectedTabIndex = tab,
                     containerColor = MaterialTheme.colorScheme.background,
-                    contentColor = appColors.primary600,
-                    indicator = { _ ->
-                        TabRowDefaults.SecondaryIndicator(
-                            Modifier, color = appColors.primary500
-                        )
-                    }
+                    contentColor = appColors.primary700
                 ) {
-                    settingsTabs.forEachIndexed { index, title ->
+                    settingsTabs.forEachIndexed { index, titleRes ->
+                        val selected = tab == index
                         Tab(
-                            selected = tab == index,
+                            selected = selected,
                             onClick = { tab = index },
-                            text = { Text(title, style = MaterialTheme.typography.labelLarge, fontWeight = if (tab == index) FontWeight.Bold else FontWeight.Normal) }
+                            selectedContentColor = appColors.primary700,
+                            unselectedContentColor = MaterialTheme.colorScheme.onSurface,
+                            text = {
+                                Text(
+                                    stringResource(titleRes), style = MaterialTheme.typography.labelLarge,
+                                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+                                )
+                            }
                         )
                     }
                 }
@@ -199,97 +246,140 @@ fun RotationSettingsDialog(
                 ) {
                     when (tab) {
                         0 -> {
-                            TimeField("로테이션 시작", "이 시각부터 오늘 배정을 계산합니다.", s.windowStart) { s = s.copy(windowStart = it) }
-                            TimeField("타겟타임(종료)", "이 시각까지 배정을 마감합니다.", s.windowEnd) { s = s.copy(windowEnd = it) }
-                            NumberField("브레이크 전 희망 슬롯 길이(분)", "브레이크 전 구간을 몇 분 단위로 쪼갤지의 기준값입니다.", s.preBreakDesiredMinutes) { s = s.copy(preBreakDesiredMinutes = it) }
-                            NumberField("브레이크 후 희망 슬롯 길이(분)", "브레이크 후 구간을 몇 분 단위로 쪼갤지의 기준값입니다.", s.postBreakDesiredMinutes) { s = s.copy(postBreakDesiredMinutes = it) }
-                            NumberField("최소 슬롯 길이(분)", "이보다 짧게 남는 구간은 자투리로 보고 앞/뒤 슬롯에 합칩니다.", s.minSlotMinutes) { s = s.copy(minSlotMinutes = it) }
-                            TimeField("기본 브레이크 시작 시각", "'브레이크 편집'에서 기본값으로 자동 생성할 시작 시각입니다.", s.defaultBreakStartMin) { s = s.copy(defaultBreakStartMin = it) }
+                            TimeField(stringResource(R.string.rotation_settings_window_start), stringResource(R.string.rotation_settings_window_start_hint), s.windowStart) { apply(s.copy(windowStart = it)) }
+                            TimeField(stringResource(R.string.rotation_settings_window_end), stringResource(R.string.rotation_settings_window_end_hint), s.windowEnd) { apply(s.copy(windowEnd = it)) }
+                            NumberField(stringResource(R.string.rotation_settings_pre_break_desired), stringResource(R.string.rotation_settings_pre_break_desired_hint), s.preBreakDesiredMinutes) { apply(s.copy(preBreakDesiredMinutes = it)) }
+                            NumberField(stringResource(R.string.rotation_settings_post_break_desired), stringResource(R.string.rotation_settings_post_break_desired_hint), s.postBreakDesiredMinutes) { apply(s.copy(postBreakDesiredMinutes = it)) }
+                            NumberField(stringResource(R.string.rotation_settings_min_slot), stringResource(R.string.rotation_settings_min_slot_hint), s.minSlotMinutes) { apply(s.copy(minSlotMinutes = it)) }
+                            TimeField(stringResource(R.string.rotation_settings_default_break_start), stringResource(R.string.rotation_settings_default_break_start_hint), s.defaultBreakStartMin) { apply(s.copy(defaultBreakStartMin = it)) }
                             NumberField(
-                                "기본 근무 시간(분)",
-                                "프리셋 관리에서 출근 시각만 입력해도 이 길이만큼 퇴근 시각을 자동으로 채웁니다. 현재 ${s.defaultShiftDurationMinutes / 60}시간 ${s.defaultShiftDurationMinutes % 60}분.",
+                                stringResource(R.string.rotation_settings_default_shift_duration),
+                                stringResource(
+                                    R.string.rotation_settings_default_shift_duration_hint,
+                                    s.defaultShiftDurationMinutes / 60, s.defaultShiftDurationMinutes % 60
+                                ),
                                 s.defaultShiftDurationMinutes
-                            ) { s = s.copy(defaultShiftDurationMinutes = it) }
+                            ) { apply(s.copy(defaultShiftDurationMinutes = it)) }
                             ChipRow(
-                                "자투리 처리", "최소 슬롯보다 짧은 자투리 구간을 어떻게 처리할지 정합니다.",
+                                stringResource(R.string.rotation_settings_remainder_policy),
+                                stringResource(R.string.rotation_settings_remainder_policy_hint),
                                 s.remainderPolicy, RemainderPolicy.entries, ::remainderLabel
-                            ) { s = s.copy(remainderPolicy = it) }
+                            ) { apply(s.copy(remainderPolicy = it)) }
                             ChipRow(
-                                "교대 텀 모드", "교대 인수인계 시간을 결과에 표시만 할지, 근무시간에서 차감할지 정합니다.",
+                                stringResource(R.string.rotation_settings_handover_mode),
+                                stringResource(R.string.rotation_settings_handover_mode_hint),
                                 s.handoverMode, HandoverMode.entries, ::handoverLabel
-                            ) { s = s.copy(handoverMode = it) }
+                            ) { apply(s.copy(handoverMode = it)) }
+                            if (s.handoverMode == HandoverMode.DEDUCT) {
+                                NumberField(stringResource(R.string.rotation_settings_handover_minutes), stringResource(R.string.rotation_settings_handover_minutes_hint), s.handoverMinutes) { apply(s.copy(handoverMinutes = it)) }
+                                NumberField(stringResource(R.string.rotation_settings_handover_min_slot), stringResource(R.string.rotation_settings_handover_min_slot_hint), s.handoverMinSlotMinutes) { apply(s.copy(handoverMinSlotMinutes = it)) }
+                            }
                         }
                         1 -> {
                             OutlinedTextField(
                                 value = s.alpha.toString(),
-                                onValueChange = { it.toDoubleOrNull()?.let { a -> s = s.copy(alpha = a) } },
-                                label = { Text("α (아침 구간 반영 계수)") }, singleLine = true, shape = RoundedCornerShape(8.dp),
+                                onValueChange = { it.toDoubleOrNull()?.let { a -> apply(s.copy(alpha = a)) } },
+                                label = { Text(stringResource(R.string.rotation_settings_alpha)) }, singleLine = true, shape = RoundedCornerShape(8.dp),
                                 modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
                             )
-                            FieldHint("브레이크 전(아침) 구간의 힘든 정도를 몇 배로 계산에 반영할지. 1.0이면 그대로 반영합니다.")
+                            FieldHint(stringResource(R.string.rotation_settings_alpha_hint))
                             ChipRow(
-                                "목표 기준", "공평 배분 목표를 총 근무시간(1/N) 기준으로 볼지, 실제 매장에 있던 시간 비율로 볼지 정합니다.",
+                                stringResource(R.string.rotation_settings_target_basis),
+                                stringResource(R.string.rotation_settings_target_basis_hint),
                                 s.targetBasis, TargetBasis.entries, ::targetBasisLabel
-                            ) { s = s.copy(targetBasis = it) }
+                            ) { apply(s.copy(targetBasis = it)) }
                             ChipRow(
-                                "누적 공평 우선도", "여러 날에 걸쳐 쌓인 누적 공평성을 얼마나 강하게 반영할지 정합니다.",
+                                stringResource(R.string.rotation_settings_fairness_priority),
+                                stringResource(R.string.rotation_settings_fairness_priority_hint),
                                 s.fairnessPriority, FairnessPriority.entries, ::priorityLabel
-                            ) { s = s.copy(fairnessPriority = it) }
+                            ) { apply(s.copy(fairnessPriority = it)) }
                         }
                         2 -> {
-                            NumberField("동일 포지션 연속 허용 슬롯 수", "같은 포지션에 연속으로 배정할 수 있는 최대 슬롯 수입니다.", s.samePositionMaxRun) { s = s.copy(samePositionMaxRun = it) }
-                            SwitchRow("브레이크가 연속을 끊음", "브레이크를 지나면 연속 배정 횟수를 다시 0부터 셉니다.", s.breakInterruptsRun) { s = s.copy(breakInterruptsRun = it) }
-                            SwitchRow("힘듬 연속 허용", "힘든 포지션을 연달아 배정하는 것을 허용할지 정합니다.", s.allowHighChain) { s = s.copy(allowHighChain = it) }
-                            NumberField("힘듬 연속 허용 슬롯 수", "힘든 포지션을 최대 몇 슬롯까지 연속으로 배정할 수 있는지입니다.", s.highMaxRun) { s = s.copy(highMaxRun = it) }
-                            NumberField("힘듬 후 쿨다운(슬롯)", "힘든 포지션을 마친 뒤 최소 몇 슬롯은 쉬운 자리를 배정할지입니다.", s.highCooldownSlots) { s = s.copy(highCooldownSlots = it) }
-                            SwitchRow("브레이크 전 구간 제약 완화", "브레이크 직전 구간에서는 위 제약들을 조금 느슨하게 적용합니다.", s.relaxPreBreak) { s = s.copy(relaxPreBreak = it) }
+                            NumberField(stringResource(R.string.rotation_settings_same_position_run), stringResource(R.string.rotation_settings_same_position_run_hint), s.samePositionMaxRun) { apply(s.copy(samePositionMaxRun = it.coerceAtLeast(1))) }
+                            SwitchRow(stringResource(R.string.rotation_settings_break_interrupts), stringResource(R.string.rotation_settings_break_interrupts_hint), s.breakInterruptsRun) { apply(s.copy(breakInterruptsRun = it)) }
+                            SwitchRow(stringResource(R.string.rotation_settings_allow_high_chain), stringResource(R.string.rotation_settings_allow_high_chain_hint), s.allowHighChain) { apply(s.copy(allowHighChain = it)) }
+                            NumberField(stringResource(R.string.rotation_settings_high_max_run), stringResource(R.string.rotation_settings_high_max_run_hint), s.highMaxRun) { apply(s.copy(highMaxRun = it)) }
+                            NumberField(stringResource(R.string.rotation_settings_high_cooldown), stringResource(R.string.rotation_settings_high_cooldown_hint), s.highCooldownSlots) { apply(s.copy(highCooldownSlots = it)) }
+                            SwitchRow(
+                                stringResource(R.string.rotation_settings_relax_pre_break),
+                                stringResource(R.string.rotation_settings_relax_pre_break_hint),
+                                s.relaxPreBreak
+                            ) { apply(s.copy(relaxPreBreak = it)) }
                         }
                         3 -> {
-                            FieldHint("여러 기준이 동시에 걸릴 때 무엇을 먼저 맞출지 순서를 정합니다. 위에 있을수록 우선순위가 높습니다.")
-                            s.tierOrder.forEachIndexed { index, tier ->
-                                Row(
-                                    Modifier.fillMaxWidth().padding(vertical = 3.dp)
-                                        .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(10.dp))
-                                        .padding(horizontal = 12.dp, vertical = 6.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text("${index + 1}. ${tierLabel(tier)}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
-                                    IconButton(
-                                        onClick = {
-                                            if (index > 0) {
-                                                val list = s.tierOrder.toMutableList()
-                                                list[index] = list[index - 1].also { list[index - 1] = list[index] }
-                                                s = s.copy(tierOrder = list)
-                                            }
-                                        },
-                                        modifier = Modifier.size(32.dp)
-                                    ) { Icon(Icons.Default.KeyboardArrowUp, contentDescription = "위로", tint = appColors.grey600) }
-                                    IconButton(
-                                        onClick = {
-                                            if (index < s.tierOrder.size - 1) {
-                                                val list = s.tierOrder.toMutableList()
-                                                list[index] = list[index + 1].also { list[index + 1] = list[index] }
-                                                s = s.copy(tierOrder = list)
-                                            }
-                                        },
-                                        modifier = Modifier.size(32.dp)
-                                    ) { Icon(Icons.Default.KeyboardArrowDown, contentDescription = "아래로", tint = appColors.grey600) }
-                                }
-                            }
+                            FieldHint(stringResource(R.string.rotation_settings_tier_hint))
+                            TierOrderList(tierOrder = s.tierOrder, onReorder = { apply(s.copy(tierOrder = it)) })
                         }
                         4 -> {
                             NumberField(
-                                "탐색 반복 횟수", "배정 결과를 몇 번 더 다듬어볼지입니다. 높일수록 더 고르게 나오지만 생성이 느려집니다.",
+                                stringResource(R.string.rotation_settings_ils_iterations),
+                                stringResource(R.string.rotation_settings_ils_iterations_hint),
                                 s.ilsIterations
-                            ) { s = s.copy(ilsIterations = it) }
+                            ) { apply(s.copy(ilsIterations = it)) }
                         }
                     }
                 }
 
                 Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp), horizontalArrangement = Arrangement.End) {
-                    TextButton(onClick = onDismiss) { Text("닫기", color = appColors.grey600) }
-                    Spacer(Modifier.width(4.dp))
-                    Button(onClick = { onSave(s) }, shape = RoundedCornerShape(8.dp)) { Text("저장") }
+                    TextButton(onClick = onDismiss) { Text(stringResource(R.string.rotation_close)) }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TierOrderList(tierOrder: List<Tier>, onReorder: (List<Tier>) -> Unit) {
+    var itemHeightPx by remember { mutableIntStateOf(0) }
+    var dragTier by remember { mutableStateOf<Tier?>(null) }
+    var dragOffsetY by remember { mutableFloatStateOf(0f) }
+
+    Column {
+        tierOrder.forEachIndexed { index, tier ->
+            val isDragging = dragTier == tier
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .zIndex(if (isDragging) 1f else 0f)
+                    .offset { IntOffset(0, if (isDragging) dragOffsetY.roundToInt() else 0) }
+                    .padding(vertical = 3.dp)
+                    .onSizeChanged { if (it.height > 0) itemHeightPx = it.height }
+                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(10.dp))
+                    .padding(horizontal = 10.dp, vertical = 8.dp)
+                    .pointerInput(tier) {
+                        detectDragGesturesAfterLongPress(
+                            onDragStart = { dragTier = tier; dragOffsetY = 0f },
+                            onDragEnd = { dragTier = null; dragOffsetY = 0f },
+                            onDragCancel = { dragTier = null; dragOffsetY = 0f },
+                            onDrag = { change, dragAmount ->
+                                change.consume()
+                                dragOffsetY += dragAmount.y
+                                val h = itemHeightPx.toFloat().coerceAtLeast(1f)
+                                val list = tierOrder.toMutableList()
+                                val curIdx = list.indexOf(tier)
+                                if (dragOffsetY > h / 2 && curIdx < list.lastIndex) {
+                                    list[curIdx] = list[curIdx + 1].also { list[curIdx + 1] = list[curIdx] }
+                                    onReorder(list)
+                                    dragOffsetY -= h
+                                } else if (dragOffsetY < -h / 2 && curIdx > 0) {
+                                    list[curIdx] = list[curIdx - 1].also { list[curIdx - 1] = list[curIdx] }
+                                    onReorder(list)
+                                    dragOffsetY += h
+                                }
+                            }
+                        )
+                    },
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(Icons.Default.DragHandle, contentDescription = stringResource(R.string.rotation_settings_tier_reorder_cd), tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        stringResource(R.string.rotation_settings_tier_entry, index + 1, stringResource(tierLabel(tier))),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(stringResource(tierDescription(tier)), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }

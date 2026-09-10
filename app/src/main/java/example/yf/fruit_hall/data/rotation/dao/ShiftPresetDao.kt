@@ -29,15 +29,9 @@ interface ShiftPresetDao {
     @Delete
     suspend fun deleteRole(role: ShiftRoleEntity)
 
-    @Query("DELETE FROM shift_roles WHERE presetId = :presetId")
-    suspend fun deleteRolesByPreset(presetId: Long)
-
     @Query("UPDATE shift_presets SET isDefault = 0")
     suspend fun clearDefault()
 
     @Query("UPDATE shift_presets SET isDefault = 1 WHERE id = :id")
     suspend fun setDefault(id: Long)
-
-    @Query("UPDATE shift_roles SET isActive = :isActive WHERE id = :id")
-    suspend fun updateRoleActive(id: Long, isActive: Boolean)
 }

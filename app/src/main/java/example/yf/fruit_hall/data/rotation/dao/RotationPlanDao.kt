@@ -34,15 +34,19 @@ interface RotationPlanDao {
     @Query("DELETE FROM rotation_cells WHERE planId = :planId")
     suspend fun deleteCells(planId: Long)
 
+    // §10-3 "탭 → 포지션 직접 선택 다이얼로그" — 강제로 포지션(또는 휴게)을 넣을 때 상태까지 같이 바꾼다.
     @Query(
-        "UPDATE rotation_cells SET positionId = :positionId, isManuallyEdited = 1 " +
+        "UPDATE rotation_cells SET positionId = :positionId, cellState = :cellState, isManuallyEdited = 1 " +
             "WHERE planId = :planId AND slotIndex = :slotIndex AND memberId = :memberId"
     )
-    suspend fun updateCellPosition(planId: Long, slotIndex: Int, memberId: Long, positionId: Long?)
+    suspend fun updateCellPositionAndState(planId: Long, slotIndex: Int, memberId: Long, positionId: Long?, cellState: String)
 
     @Query(
         "UPDATE rotation_cells SET isPinned = :isPinned " +
             "WHERE planId = :planId AND slotIndex = :slotIndex AND memberId = :memberId"
     )
     suspend fun updatePinned(planId: Long, slotIndex: Int, memberId: Long, isPinned: Boolean)
+
+    @Query("DELETE FROM rotation_plans WHERE dayPlanId = :dayPlanId")
+    suspend fun deletePlansForDayPlan(dayPlanId: Long)
 }

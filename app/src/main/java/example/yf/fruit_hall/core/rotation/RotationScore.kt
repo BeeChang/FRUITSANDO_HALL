@@ -4,11 +4,40 @@ package example.yf.fruit_hall.core.rotation
 object RotationScore {
 
     data class Result(
+        /** 저장·표시용 요약값. 포화 연산이라 뒤집히진 않지만, **비교에 쓰면 안 된다** — [ranking]을 쓸 것. */
         val score: Long,
+        /** tierOrder 순서의 계층별 raw. 해의 우열은 이 값의 사전식 비교로만 판단한다([compareRanking]). */
+        val ranking: List<Long>,
         val violations: List<Violation>,
         val debtCurve: Map<Long, List<Double>>,
         val targetCurve: List<Double>
     )
+
+    /**
+     * 계층 사전식 비교 — 상위 계층이 다르면 하위 계층은 보지 않는다(§6-1 불변식).
+     *
+     * ⚠ 가중합(Σ weight×raw)으로 비교하면 안 된다. DerivedWeights의 계층1 가중치는 4.8e14 수준인데
+     * 계층1 raw는 실사용에서 1e5~1e7이라 곱이 Long을 넘겨 값이 뒤집힌다. 그러면 점수 비교가 통째로
+     * 무의미해져서 연속 위반도, 계층 우선순위 변경도 아무 효과가 없어진다.
+     */
+    fun compareRanking(a: List<Long>, b: List<Long>): Int {
+        for (i in 0 until maxOf(a.size, b.size)) {
+            val cmp = a.getOrElse(i) { 0L }.compareTo(b.getOrElse(i) { 0L })
+            if (cmp != 0) return cmp
+        }
+        return 0
+    }
+
+    private fun saturatingMul(a: Long, b: Long): Long {
+        if (a == 0L || b == 0L) return 0L
+        val result = a * b
+        return if (result / b != a || result < 0L) Long.MAX_VALUE else result
+    }
+
+    private fun saturatingAdd(a: Long, b: Long): Long {
+        val result = a + b
+        return if (result < a) Long.MAX_VALUE else result
+    }
 
     fun evaluate(input: RotationInput, slots: List<Slot>, cells: List<Cell>): Result {
         val positionById = input.positions.associateBy { it.id }
@@ -36,9 +65,12 @@ object RotationScore {
             Tier.LOW_FAIRNESS to fairnessRaw,
             Tier.TIEBREAK to 0L
         )
-        val score = input.tierOrder.sumOf { tier -> (weights[tier] ?: 0L) * (raw[tier] ?: 0L) }
+        val score = input.tierOrder.fold(0L) { acc, tier ->
+            saturatingAdd(acc, saturatingMul(weights[tier] ?: 0L, raw[tier] ?: 0L))
+        }
+        val ranking = input.tierOrder.map { raw[it] ?: 0L }
 
-        return Result(score, violations, cumulativeResult.debtCurve, cumulativeResult.targetCurve)
+        return Result(score, ranking, violations, cumulativeResult.debtCurve, cumulativeResult.targetCurve)
     }
 
     private fun effectiveDuration(slot: Slot, tc: TimeConfig): Int {
@@ -153,11 +185,11 @@ object RotationScore {
                         if (!c.allowHighChain) {
                             if (isHigh) {
                                 if (cooldownRemaining > 0 && !relaxed) {
-                                    violations += Violation(cell.slotIndex, memberId, "HIGH_COOLDOWN", "힘듬 쿨다운 위반")
+                                    violations += Violation(cell.slotIndex, memberId, "HIGH_COOLDOWN", "고강도 쿨다운 위반")
                                 }
                                 highRun += 1
                                 if (highRun > c.highMaxRun && !relaxed) {
-                                    violations += Violation(cell.slotIndex, memberId, "HIGH_CHAIN", "힘듬 연속 초과")
+                                    violations += Violation(cell.slotIndex, memberId, "HIGH_CHAIN", "고강도 연속 초과")
                                 }
                                 cooldownRemaining = 0
                             } else {
@@ -185,7 +217,7 @@ object RotationScore {
         return violations
     }
 
-    /** §6-1 계층3. 힘듬 종류가 1개 이하면 계층1과 완전히 동일해져 이중 벌점이 걸리므로 0으로 무력화. */
+    /** §6-1 계층3. 고강도 종류가 1개 이하면 계층1과 완전히 동일해져 이중 벌점이 걸리므로 0으로 무력화. */
     private fun evaluateHighVariety(
         input: RotationInput,
         slots: List<Slot>,
