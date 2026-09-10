@@ -23,6 +23,7 @@ class AppViewModel @Inject constructor(
         NavigationPreferenceRepository.KEY_CLOCK -> MainRoute.Clock
         NavigationPreferenceRepository.KEY_SCHEDULE -> MainRoute.Schedule
         NavigationPreferenceRepository.KEY_TRAY_SPLIT -> MainRoute.TraySplit
+        NavigationPreferenceRepository.KEY_ROTATION -> MainRoute.Rotation
         NavigationPreferenceRepository.KEY_DISCORD -> MainRoute.Discord
         else -> MainRoute.Pos
     }
@@ -49,6 +50,7 @@ class AppViewModel @Inject constructor(
             MainRoute.Clock -> NavigationPreferenceRepository.KEY_CLOCK
             MainRoute.Schedule -> NavigationPreferenceRepository.KEY_SCHEDULE
             MainRoute.TraySplit -> NavigationPreferenceRepository.KEY_TRAY_SPLIT
+            MainRoute.Rotation -> NavigationPreferenceRepository.KEY_ROTATION
             MainRoute.Discord -> NavigationPreferenceRepository.KEY_DISCORD
         }
         navPrefs.saveLastRoute(key)

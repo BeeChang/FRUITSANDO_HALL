@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.PointOfSale
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -92,6 +93,13 @@ private val railItems = listOf(
         isSelected = { it?.hasRoute<MainRoute.TraySplit>() ?: false },
     ),
     RailItemData(
+        route = MainRoute.Rotation,
+        labelRes = R.string.nav_rotation,
+        cdRes = R.string.cd_nav_rotation,
+        icon = Icons.Default.SwapHoriz,
+        isSelected = { it?.hasRoute<MainRoute.Rotation>() ?: false },
+    ),
+    RailItemData(
         route = MainRoute.Discord,
         labelRes = R.string.nav_discord,
         cdRes = R.string.cd_nav_discord,
@@ -115,6 +123,7 @@ fun AppNavigationRail(
         MainRoute.Clock    to Color(0xFFFFD580),  // 소프트 앰버
         MainRoute.Schedule to Color(0xFFCE93D8),  // 소프트 라벤더
         MainRoute.TraySplit to Color(0xFFB5C99A), // 소프트 세이지그린
+        MainRoute.Rotation to Color(0xFF7FD1D1),  // 소프트 틸
         MainRoute.Discord to Color(0xFF9DA9F2),   // 소프트 인디고 (디스코드 브랜드 톤)
     )
     val routeTextColorMap = mapOf(
@@ -125,6 +134,7 @@ fun AppNavigationRail(
         MainRoute.Clock    to Color(0xFF8C6200),  // 진한 앰버
         MainRoute.Schedule to Color(0xFF6A3D9A),  // 진한 퍼플
         MainRoute.TraySplit to Color(0xFF4A6B2A), // 진한 올리브그린
+        MainRoute.Rotation to Color(0xFF0B6E6E),  // 진한 틸
         MainRoute.Discord to Color(0xFF3F4BB0),   // 진한 인디고
     )
 

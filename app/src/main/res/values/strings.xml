@@ -9,6 +9,7 @@
     <string name="nav_clock">시계</string>
     <string name="nav_schedule">스케줄</string>
     <string name="nav_tray_split">판나누기</string>
+    <string name="nav_rotation">포지션2</string>
     <string name="nav_discord">디스코드</string>
 
     <!-- Screen Titles -->
@@ -19,6 +20,7 @@
     <string name="screen_clock">시계</string>
     <string name="screen_schedule">스케줄</string>
     <string name="screen_tray_split">판나누기</string>
+    <string name="screen_rotation">포지션2</string>
 
     <!-- Common -->
     <string name="ok">확인</string>
@@ -34,6 +36,7 @@
     <string name="cd_nav_clock">시계 화면으로 이동</string>
     <string name="cd_nav_schedule">스케줄 화면으로 이동</string>
     <string name="cd_nav_tray_split">판나누기 화면으로 이동</string>
+    <string name="cd_nav_rotation">포지션2 화면으로 이동</string>
     <string name="cd_nav_discord">디스코드 화면으로 이동</string>
     <string name="cd_close">닫기</string>
 
@@ -232,4 +235,236 @@
     <string name="tray_snackbar_reset_done">초기화되었습니다</string>
     <string name="tray_snackbar_save_done">저장되었습니다</string>
     <string name="tray_snackbar_discord_send_done">전송에 성공했습니다</string>
+
+    <!-- ══════════ Rotation (포지션2) ══════════ -->
+
+    <!-- 공용 -->
+    <string name="rotation_close">닫기</string>
+    <string name="rotation_cancel">취소</string>
+    <string name="rotation_confirm">확인</string>
+    <string name="rotation_save">저장</string>
+    <string name="rotation_delete">삭제</string>
+    <string name="rotation_add">추가</string>
+    <string name="rotation_color_select">컬러 선택</string>
+    <string name="rotation_intensity_high">고강도</string>
+    <string name="rotation_intensity_low">저강도</string>
+
+    <!-- 상단 바 -->
+    <string name="rotation_preset_none">프리셋 없음</string>
+    <string name="rotation_top_today_schedule">오늘 스케줄 %1$d명</string>
+    <string name="rotation_top_member_manage">멤버 관리</string>
+    <string name="rotation_top_preset_manage">프리셋 관리</string>
+    <string name="rotation_top_break_edit">브레이크 편집</string>
+    <string name="rotation_top_settings">설정</string>
+
+    <!-- 하단 요약 바 -->
+    <string name="rotation_violation_count">위반 %1$d건</string>
+    <string name="rotation_violation_none">위반 없음</string>
+    <string name="rotation_violation_detail_link">[고강도 횟수·상세]</string>
+    <string name="rotation_high_load_label">고강도</string>
+    <string name="rotation_high_load_chip">%1$s %2$d</string>
+
+    <!-- 하단 액션 버튼 -->
+    <string name="rotation_action_reset">배정 초기화</string>
+    <string name="rotation_action_regenerate_at">%1$s부터 재생성</string>
+    <string name="rotation_action_regenerate_pick">특정 시간부터 재생성</string>
+    <string name="rotation_action_assign">포지션 배정하기</string>
+    <string name="rotation_regenerate_full">전체 재생성</string>
+    <string name="rotation_footer_hint_draft">※ 사람·근무시간을 채운 뒤 \'포지션 배정하기\'를 누르면 자동으로 채웁니다.</string>
+    <string name="rotation_footer_hint_generated">※ 특정 시간부터 재생성: 그 이후만 다시 배정합니다. 전체 재생성: 처음부터 새로 계산합니다.</string>
+
+    <!-- 오늘 스케줄 다이얼로그 -->
+    <string name="rotation_today_roster_title">오늘 스케줄 (%1$s)</string>
+    <string name="rotation_today_roster_desc">스케줄 탭에 등록된 오늘 근무자입니다.</string>
+
+    <!-- 생성 중 -->
+    <string name="rotation_generating_title">포지션 배정 중…</string>
+    <string name="rotation_generating_desc">공평하게 나눌 조합을 찾고 있습니다</string>
+
+    <!-- 위반·고강도 상세 다이얼로그 -->
+    <string name="rotation_violation_dialog_title">위반·고강도 횟수 (§8, §11)</string>
+    <string name="rotation_high_load_section">고강도 포지션 횟수</string>
+    <string name="rotation_high_load_empty">고강도 포지션이 없거나 아직 배정되지 않았습니다.</string>
+    <string name="rotation_high_load_entry">· %1$s — %2$s</string>
+    <string name="rotation_high_load_count">%1$s %2$d회</string>
+    <string name="rotation_violation_section">위반 (§8 소프트 제약)</string>
+    <string name="rotation_violation_empty">위반이 없습니다.</string>
+    <string name="rotation_violation_desc">전부 소프트 제약이라 해가 없을 때도 표는 만들어지고, 대신 여기 표시됩니다. 항목을 누르면 그 자리를 바로 포지션 선택으로 고쳐 없앨 수 있습니다.</string>
+    <string name="rotation_violation_entry">· %1$s · %2$s · %3$s</string>
+
+    <!-- 배정 초기화 다이얼로그 -->
+    <string name="rotation_reset_desc">무엇을 되돌릴지 고르세요. 표는 근무스케줄 → 사람 → 포지션 순으로 얹혀 있어서, 어느 것을 지우든 포지션(생성된 결과표)은 함께 지워집니다.</string>
+    <string name="rotation_reset_positions_title">포지션만 초기화</string>
+    <string name="rotation_reset_positions_desc">생성된 결과표만 지웁니다. 사람과 근무스케줄은 그대로 둡니다.</string>
+    <string name="rotation_reset_members_title">인원 초기화</string>
+    <string name="rotation_reset_members_desc">사람을 모두 미배정으로 되돌립니다. 근무스케줄은 그대로 둡니다.</string>
+    <string name="rotation_reset_schedules_title">근무스케줄 초기화</string>
+    <string name="rotation_reset_schedules_desc">출퇴근 시각·스케줄 이름·브레이크를 되돌립니다. 사람은 그대로 둡니다.</string>
+    <string name="rotation_reset_all_title">전체 초기화</string>
+    <string name="rotation_reset_all_desc">사람·근무스케줄·포지션을 모두 되돌립니다.</string>
+
+    <!-- ViewModel 안내 문구 -->
+    <string name="rotation_error_no_schedule">먼저 근무 스케줄을 추가해주세요</string>
+    <string name="rotation_error_no_member">표의 이름 칸에 아래 멤버를 끌어다 놓아주세요</string>
+    <string name="rotation_error_no_preset">프리셋을 먼저 선택해주세요</string>
+    <string name="rotation_error_generate_failed">생성에 실패했습니다</string>
+
+    <!-- 표 -->
+    <string name="rotation_grid_name_header">이름</string>
+    <string name="rotation_grid_pin_cd">고정</string>
+    <string name="rotation_grid_break_label">휴게</string>
+    <string name="rotation_grid_add_row">근무 줄 추가</string>
+    <string name="rotation_grid_schedule_empty">스케줄 미배정</string>
+    <string name="rotation_grid_delete_row">이 줄 삭제</string>
+    <string name="rotation_grid_exclude_cd">포지션 배정에서 제외/포함</string>
+    <string name="rotation_member_unassigned">미배정</string>
+    <string name="rotation_member_manage_edit">멤버 추가·수정</string>
+    <string name="rotation_palette_schedule_title">근무 스케줄</string>
+    <string name="rotation_palette_position_title">포지션</string>
+    <string name="rotation_palette_hint">꾹 눌러 끌어서 표에 놓으세요</string>
+    <string name="rotation_palette_empty">등록된 근무 스케줄이 없습니다 · 스케줄 관리에서 추가하세요</string>
+    <string name="rotation_offduty_title">멤버</string>
+    <string name="rotation_offduty_empty">배정할 수 있는 멤버가 없습니다</string>
+    <string name="rotation_chart_title">누적 고강도</string>
+
+    <!-- 특정 시간부터 재생성 -->
+    <string name="rotation_cursor_picker_title">특정 시간부터 다시 정하기</string>
+    <string name="rotation_cursor_picker_desc">선택한 시각 이전 배정은 그대로 두고, 이후만 다시 배정합니다.</string>
+    <string name="rotation_cursor_picker_confirm">이 시간부터 재생성</string>
+    <string name="rotation_time_label">시각</string>
+
+    <!-- 포지션 선택 다이얼로그 -->
+    <string name="rotation_position_picker_title">포지션 선택</string>
+    <string name="rotation_position_picker_desc">고르면 이 자리가 바로 이걸로 대체됩니다.</string>
+
+    <!-- 멤버 관리 다이얼로그 -->
+    <string name="rotation_member_manage_title">멤버 관리</string>
+    <string name="rotation_member_empty">멤버를 추가해보세요</string>
+    <string name="rotation_member_add_new">새 멤버 추가</string>
+    <string name="rotation_member_name_label">이름</string>
+
+    <!-- 프리셋 관리 다이얼로그 -->
+    <string name="rotation_preset_manage_title">프리셋 관리</string>
+    <string name="rotation_preset_tab_preset">프리셋</string>
+    <string name="rotation_preset_desc">프리셋은 함께 쓰이는 포지션·근무 스케줄 묶음의 이름입니다. 옆 탭에서 그 안을 채워 넣으세요.</string>
+    <string name="rotation_preset_rename_save">이름 저장</string>
+    <string name="rotation_preset_rename">이름 변경</string>
+    <string name="rotation_preset_set_default">기본 프리셋으로 지정</string>
+    <string name="rotation_preset_name_label">프리셋 이름</string>
+    <string name="rotation_preset_add">프리셋 추가</string>
+
+    <!-- 포지션 관리 탭 -->
+    <string name="rotation_position_add_new">새 포지션 추가</string>
+    <string name="rotation_position_name_label">포지션 이름</string>
+    <string name="rotation_position_min_label">최소 정원</string>
+    <string name="rotation_position_max_label">최대(비우면 무제한)</string>
+    <string name="rotation_position_open_priority_label">우선 배정 순위</string>
+    <string name="rotation_position_overflow_priority_label">추가 배정 순위(비우면 안받음)</string>
+    <string name="rotation_position_priority_hint">우선 배정: 인원이 부족해도 이 순서대로 먼저·끝까지 채워요 (1이 가장 먼저)\n추가 배정: 인원이 남으면 이 순서대로 더 받아요</string>
+    <string name="rotation_position_unlimited">무제한</string>
+    <string name="rotation_position_summary">%1$s · 최소%2$d · 최대%3$s · 우선%4$d</string>
+    <string name="rotation_position_summary_overflow">%1$s · 추가%2$d</string>
+
+    <!-- 근무 스케줄 템플릿 탭 -->
+    <string name="rotation_schedule_desc">출퇴근 시간 모양을 만들어두면 표 아래 팔레트에서 끌어다 놓아 각 줄에 한 번에 적용할 수 있습니다.</string>
+    <string name="rotation_schedule_time_range">%1$s~%2$s</string>
+    <string name="rotation_schedule_break_range">브레이크 %1$s~%2$s</string>
+    <string name="rotation_schedule_add_new">새 템플릿 추가</string>
+    <string name="rotation_schedule_name_label">템플릿 이름 (예: 오픈, 미들, 마감)</string>
+    <string name="rotation_schedule_break_section">기본 브레이크</string>
+    <string name="rotation_schedule_break_start">브레이크 시작</string>
+    <string name="rotation_schedule_add">템플릿 추가</string>
+    <string name="rotation_role_start_label">출근</string>
+    <string name="rotation_role_end_label">퇴근</string>
+    <string name="rotation_role_break_minutes_label">브레이크 길이(분)</string>
+
+    <!-- 브레이크 편집 다이얼로그 -->
+    <string name="rotation_break_edit_title">브레이크 편집</string>
+    <string name="rotation_break_desc">브레이크는 여기서만 정합니다 — 근무 스케줄에는 브레이크가 고정돼 있지 않으니, 사람마다 그날그날 원하는 시간으로 자유롭게 잡으세요.</string>
+    <string name="rotation_break_fill_default">배정된 인원 중 브레이크 없는 사람에게 기본 시각(%1$s) 일괄 채우기</string>
+    <string name="rotation_break_add">브레이크 추가</string>
+    <string name="rotation_break_empty">등록된 브레이크가 없어요</string>
+    <string name="rotation_break_start_label">시작</string>
+    <string name="rotation_break_end_label">종료</string>
+
+    <!-- 설정 다이얼로그 -->
+    <string name="rotation_settings_title">설정</string>
+    <string name="rotation_settings_applies_immediately">변경 즉시 적용됩니다</string>
+    <string name="rotation_settings_section_time">시간</string>
+    <string name="rotation_settings_section_fairness">공평성</string>
+    <string name="rotation_settings_section_constraint">제약</string>
+    <string name="rotation_settings_section_tier">우선순위</string>
+    <string name="rotation_settings_section_search">탐색</string>
+    <string name="rotation_settings_window_start">로테이션 시작</string>
+    <string name="rotation_settings_window_start_hint">이 시각부터 오늘 배정을 계산합니다.</string>
+    <string name="rotation_settings_window_end">타겟타임(종료)</string>
+    <string name="rotation_settings_window_end_hint">이 시각까지 배정을 마감합니다.</string>
+    <string name="rotation_settings_pre_break_desired">브레이크 전 희망 슬롯 길이(분)</string>
+    <string name="rotation_settings_pre_break_desired_hint">브레이크 전 구간을 몇 분 단위로 쪼갤지의 기준값입니다. 구간 길이가 정확히 나누어떨어지지 않으면 슬롯 길이가 조금씩 늘거나 줄어들 수 있습니다.</string>
+    <string name="rotation_settings_post_break_desired">브레이크 후 희망 슬롯 길이(분)</string>
+    <string name="rotation_settings_post_break_desired_hint">브레이크 후 구간을 몇 분 단위로 쪼갤지의 기준값입니다. 구간 길이가 정확히 나누어떨어지지 않으면 슬롯 길이가 조금씩 늘거나 줄어들 수 있습니다.</string>
+    <string name="rotation_settings_min_slot">최소 슬롯 길이(분)</string>
+    <string name="rotation_settings_min_slot_hint">이보다 짧게 남는 구간은 자투리로 보고 앞/뒤 슬롯에 합칩니다.</string>
+    <string name="rotation_settings_default_break_start">기본 브레이크 시작 시각</string>
+    <string name="rotation_settings_default_break_start_hint">\'브레이크 편집\'에서 기본값으로 자동 생성할 시작 시각입니다.</string>
+    <string name="rotation_settings_default_shift_duration">기본 근무 시간(분)</string>
+    <string name="rotation_settings_default_shift_duration_hint">스케줄 관리에서 출근 시각만 입력해도 이 길이만큼 퇴근 시각을 자동으로 채웁니다. 현재 %1$d시간 %2$d분.</string>
+    <string name="rotation_settings_remainder_policy">자투리 처리</string>
+    <string name="rotation_settings_remainder_policy_hint">최소 슬롯보다 짧은 자투리 구간을 어떻게 처리할지 정합니다.</string>
+    <string name="rotation_settings_handover_mode">교대 텀 모드</string>
+    <string name="rotation_settings_handover_mode_hint">교대 인수인계 시간을 공평 계산에 반영할지 정합니다. 결과 화면에 보이는 슬롯 시간 자체는 이 설정과 무관하며, 슬롯이 정확히 1시간씩 안 떨어지는 것은 위 \'희망 슬롯 길이\'가 구간 길이에 딱 나누어떨어지지 않을 때 생기는 정상 동작입니다.</string>
+    <string name="rotation_settings_handover_minutes">교대 인수인계 시간(분)</string>
+    <string name="rotation_settings_handover_minutes_hint">부채 계산 시 슬롯 길이에서 차감할 인수인계 시간입니다.</string>
+    <string name="rotation_settings_handover_min_slot">인수인계 최소 슬롯 길이(분)</string>
+    <string name="rotation_settings_handover_min_slot_hint">이보다 짧은 슬롯에는 인수인계 차감을 적용하지 않습니다.</string>
+    <string name="rotation_settings_alpha">α (아침 구간 반영 계수)</string>
+    <string name="rotation_settings_alpha_hint">브레이크 전(아침) 구간의 힘든 정도를 몇 배로 계산에 반영할지. 1.0이면 그대로 반영합니다.</string>
+    <string name="rotation_settings_target_basis">목표 기준</string>
+    <string name="rotation_settings_target_basis_hint">공평 배분 목표를 총 근무시간(1/N) 기준으로 볼지, 실제 매장에 있던 시간 비율로 볼지 정합니다.</string>
+    <string name="rotation_settings_fairness_priority">누적 공평 우선도</string>
+    <string name="rotation_settings_fairness_priority_hint">여러 날에 걸쳐 쌓인 누적 공평성을 얼마나 강하게 반영할지 정합니다.</string>
+    <string name="rotation_settings_same_position_run">동일 포지션 연속 허용 슬롯 수</string>
+    <string name="rotation_settings_same_position_run_hint">같은 포지션에 연속으로 배정할 수 있는 최대 슬롯 수입니다. 1 미만은 정의상 의미가 없어 1로 고정됩니다.</string>
+    <string name="rotation_settings_break_interrupts">브레이크가 연속을 끊음</string>
+    <string name="rotation_settings_break_interrupts_hint">브레이크를 지나면 연속 배정 횟수를 다시 0부터 셉니다.</string>
+    <string name="rotation_settings_allow_high_chain">고강도 연속 허용</string>
+    <string name="rotation_settings_allow_high_chain_hint">고강도 포지션을 연달아 배정하는 것을 허용할지 정합니다.</string>
+    <string name="rotation_settings_high_max_run">고강도 연속 허용 슬롯 수</string>
+    <string name="rotation_settings_high_max_run_hint">고강도 포지션을 최대 몇 슬롯까지 연속으로 배정할 수 있는지입니다.</string>
+    <string name="rotation_settings_high_cooldown">고강도 후 쿨다운(슬롯)</string>
+    <string name="rotation_settings_high_cooldown_hint">고강도 포지션을 마친 뒤 최소 몇 슬롯은 저강도 자리를 배정할지입니다.</string>
+    <string name="rotation_settings_relax_pre_break">브레이크 전 구간 제약 완화</string>
+    <string name="rotation_settings_relax_pre_break_hint">켜면 첫 브레이크 전(오전) 구간에서는 위 제약을 아예 검사하지 않습니다 — 그 시간대에 같은 포지션이 연속으로 나와도 위반으로 잡히지 않고 고쳐지지도 않습니다. 오전은 인원이 적어 연속을 피할 수 없는 경우가 많아 기본은 켜짐입니다. 오전에도 연속을 피하고 싶으면 끄세요.</string>
+    <string name="rotation_settings_tier_hint">여러 기준이 동시에 걸릴 때 무엇을 먼저 맞출지 순서를 정합니다. 위에 있을수록 우선순위가 높습니다. 길게 눌러 위아래로 끌면 순서를 바꿀 수 있습니다.</string>
+    <string name="rotation_settings_tier_reorder_cd">끌어서 순서 변경</string>
+    <string name="rotation_settings_tier_entry">%1$d. %2$s</string>
+    <string name="rotation_settings_ils_iterations">탐색 반복 횟수</string>
+    <string name="rotation_settings_ils_iterations_hint">배정 결과를 몇 번 더 다듬어볼지입니다. 높일수록 더 고르게 나오지만 생성이 느려집니다.</string>
+
+    <!-- 설정: 계층(Tier) -->
+    <string name="rotation_tier_cumulative_high">누적 고강도 편차</string>
+    <string name="rotation_tier_cumulative_high_desc">고강도 포지션을 남들보다 많이 맡지 않도록 우선 맞춥니다.</string>
+    <string name="rotation_tier_constraint">연속 위반</string>
+    <string name="rotation_tier_constraint_desc">연속 근무 제한 등 정해둔 규칙을 어기지 않도록 우선 맞춥니다.</string>
+    <string name="rotation_tier_high_variety">고강도 종류별 편차</string>
+    <string name="rotation_tier_high_variety_desc">고강도 포지션 중에서도 특정 자리에만 몰리지 않도록 맞춥니다.</string>
+    <string name="rotation_tier_low_fairness">저강도 공평</string>
+    <string name="rotation_tier_low_fairness_desc">저강도 포지션도 여러 사람에게 골고루 돌아가도록 맞춥니다.</string>
+    <string name="rotation_tier_tiebreak">타이브레이크</string>
+    <string name="rotation_tier_tiebreak_desc">위 기준이 전부 같으면 무작위로 순서를 정합니다.</string>
+
+    <!-- 설정: enum 선택지 -->
+    <string name="rotation_remainder_redistribute">재분배</string>
+    <string name="rotation_remainder_absorb">흡수</string>
+    <string name="rotation_remainder_standalone">독립</string>
+    <string name="rotation_remainder_drop">제외</string>
+    <string name="rotation_handover_display_only">꺼짐(표시만)</string>
+    <string name="rotation_handover_deduct">켜짐(부채 차감)</string>
+    <string name="rotation_target_total_minutes">총분(1/N)</string>
+    <string name="rotation_target_presence_ratio">재실 비율</string>
+    <string name="rotation_priority_high">높음</string>
+    <string name="rotation_priority_mid">중간</string>
+    <string name="rotation_priority_low">낮음</string>
+    <string name="rotation_priority_off">끔</string>
+
 </resources>
